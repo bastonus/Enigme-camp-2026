@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opération Cubjac — Ordre de Mission N°4</title>
+  <meta name="description" content="Réseau AS — Secteur Périgord Noir — Août 1944. Mission confidentielle.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  ÉCRAN D'INTRODUCTION                  -->
+<!-- ═══════════════════════════════════════ -->
+<div id="intro-screen">
+  <div id="teleype-box">
+    <div id="teletype-text"></div><span id="teleype-cursor"></span>
+  </div>
+  <div id="intro-skip" onclick="skipIntro()">[ APPUYER SUR ENTRÉE POUR CONTINUER ]</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  SCÈNE PRINCIPALE — LA TABLE           -->
+<!-- ═══════════════════════════════════════ -->
+<div id="scene">
+  <div id="vignette"></div>
+  <div id="spotlight"></div>
+  <div id="candle-glow"></div>
+
+  <!-- Révélations UV (mode lampe éteinte) -->
+  <div class="uv-reveal" style="top:58%;left:12%;font-size:1.2rem;transform:rotate(-3deg)">
+    BBC · 49.8 MHz
+  </div>
+  <div class="uv-reveal" style="top:12%;left:55%;font-size:0.9rem">
+    ↑ La Forge d'Ans
+  </div>
+  <div class="uv-reveal" style="top:50%;left:46%;font-size:0.85rem;transform:rotate(2deg)">
+    T.M. — Cubjac, 3 août ✦
+  </div>
+  <div class="uv-reveal" style="top:65%;left:80%;font-size:1.1rem">
+    ↗ Azimut 245°
+  </div>
+
+  <!-- Canvas pour les ombres volumétriques simulées -->
+  <canvas id="shadow-canvas" style="position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;"></canvas>
+
+  <!-- OBJETS -->
+  <!-- 1. Poste Radio -->
+  <div id="obj-radio" class="obj" title="Poste radio bakélite" onclick="toggleRadioPower(event)">
+    <div id="radio-ambient-glow"></div>
+    <img src="img/poste_radio off.png" alt="Poste radio bakélite" draggable="false" style="width:100%; height:auto; display:block;">
+  </div>
+
+  <!-- 2. Boîte à Cigares -->
+  <img id="obj-cigare-box" class="obj float-anim" src="img/boite_cigare.png"
+       alt="Boîte à cigares Villiger" draggable="false"
+       onclick="openCigareBox()" title="Une boîte à cigares de luxe…">
+  
+  <!-- Cigare caché dans la boîte -->
+  <img id="obj-cigare" class="obj" src="img/cigare.png" alt="Cigare"
+       draggable="false" onclick="slideCigar()" title="Un cigare Havane…"
+       style="display:none; z-index:13;">
+
+  <!-- 3. Carte IGN -->
+  <img id="obj-carte" class="obj" src="img/carte.png" alt="Carte IGN Dordogne"
+       draggable="false" onclick="openModal('modal-carte')" title="Une carte d'état-major…">
+
+  <!-- 4. Carnet de notes -->
+  <img id="obj-carnet" class="obj" src="img/carnet.png" alt="Carnet de notes"
+       draggable="false" onclick="openModal('modal-carnet')" title="Un carnet de notes…">
+
+  <!-- 5. Luger P08 -->
+  <img id="obj-luger" class="obj" src="img/luger.png" alt="Luger P08"
+       draggable="false" onclick="slideLuger()" title="Un Luger posé sur quelque chose…">
+  <!-- Papier caché sous le Luger -->
+  <div id="luger-paper" style="position:absolute;top:42%;left:81%;opacity:0;z-index:9;pointer-events:none;transition:opacity .5s;">
+    <svg viewBox="0 0 110 70" xmlns="http://www.w3.org/2000/svg" style="width:10vw;filter:drop-shadow(2px 4px 8px rgba(0,0,0,0.5))">
+      <rect width="110" height="70" fill="#f0e8b0" rx="1"/>
+      <text x="55" y="12" font-size="5" fill="#8a0000" font-family="serif" text-anchor="middle" font-weight="bold">GEHEIMNIS</text>
+      <line x1="5" y1="16" x2="105" y2="16" stroke="#8a0000" stroke-width="0.5"/>
+      <text x="55" y="26" font-size="4.5" fill="#2a1a00" font-family="serif" text-anchor="middle">18-2 / 8-1-2 / 18-2-1-8</text>
+      <text x="55" y="36" font-size="4.5" fill="#2a1a00" font-family="serif" text-anchor="middle">2-1-8 / 1-8 / 18-2-1 / 8-1</text>
+      <text x="55" y="50" font-size="4" fill="#5a3a00" font-family="serif" text-anchor="middle" font-style="italic">Échiquier habituel — Clé connue</text>
+    </svg>
+  </div>
+
+  <!-- 6. Boussole -->
+  <img id="obj-boussole" class="obj" src="img/boussole.png" alt="Boussole"
+       draggable="false" onclick="flipBoussole()" title="Une boussole en laiton…">
+
+  <!-- 7. Bougie -->
+  <img id="obj-lampe" class="obj" src="img/bougie.png" alt="Bougie allumée"
+       draggable="false" onclick="toggleLamp()" title="Une bougie posée là…">
+
+  <!-- 8. Machine à écrire -->
+  <img id="obj-machine" class="obj" src="img/machine_ecrire.png" alt="Machine à écrire Remington"
+       draggable="false" onclick="openModal('modal-machine')" title="La Remington du Facteur…">
+
+  <!-- 9. Journal La Dépêche -->
+  <img id="obj-journal" class="obj" src="img/journal.png" alt="Journal La Dépêche"
+       draggable="false" onclick="openModal('modal-journal')" title="Un vieux journal…">
+
+  <!-- 10. Clé Morse -->
+  <img id="obj-cle-morse" class="obj" src="img/cle_morse.png" alt="Clé télégraphique"
+       draggable="false" onmousedown="interactMorseKey(true)" onmouseup="interactMorseKey(false)" onmouseleave="interactMorseKey(false)" title="Clé télégraphique (cliquez pour émettre)">
+
+  <!-- 11. Bouteille de Whisky (remplace la flasque) -->
+  <img id="obj-whisky" class="obj" src="img/whisky.png" alt="Bouteille de Whisky"
+       draggable="false" onclick="interactWhisky()" title="Une bouteille de whisky…">
+  <!-- Papier qui sort de la bouteille -->
+  <div id="whisky-paper" style="position:absolute;top:67%;left:80%;opacity:0;z-index:9;pointer-events:none;transition:opacity .5s;">
+    <svg viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg" style="width:8vw;filter:drop-shadow(2px 4px 8px rgba(0,0,0,0.5))">
+      <rect width="100" height="50" fill="#f0e8b0" rx="1"/>
+      <text x="50" y="15" font-size="4" fill="#2a1a00" font-family="serif" text-anchor="middle">Coordonnées parachutage:</text>
+      <text x="50" y="25" font-size="4" fill="#2a1a00" font-family="serif" text-anchor="middle">45°01'N — 1°05'E</text>
+      <text x="50" y="40" font-size="3" fill="#5a3a00" font-family="serif" text-anchor="middle" font-style="italic">J'aurais bien gardé les armes.</text>
+      <text x="50" y="45" font-size="3" fill="#5a3a00" font-family="serif" text-anchor="middle" font-style="italic">— J.E.</text>
+    </svg>
+  </div>
+
+  <!-- 12. Photo de Roland Grandou -->
+  <img id="obj-photo" class="obj" src="img/photo.png" alt="Photo de Roland Grandou"
+       draggable="false" onclick="showPhotoTribute()" title="Une photo encadrée…">
+
+</div><!-- /scene -->
+
+<!-- Curseur custom -->
+<div id="custom-cursor" style="position:fixed;width:18px;height:18px;border:2px solid rgba(255,200,100,0.6);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .1s;"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  TICKET DE TRAMWAY                     -->
+<!-- ═══════════════════════════════════════ -->
+<div id="ticket-overlay">
+  <div class="ticket">
+    <span class="ticket-close" onclick="document.getElementById('ticket-overlay').classList.remove('open')">✕</span>
+    <div class="ticket-header">TRAMWAYS DE PÉRIGUEUX — 2ème CLASSE</div>
+    <p><em>DANDY à FACTEUR — 4 août 44</em></p>
+    <p>Écoute ce soir 21h45 sur la BBC.<br>Fréquence habituelle.<br>Le message sera pour nous.<br>— V.</p>
+    <div class="morse-line">.-.. . ...  ... .- -. --. .-.. --- - ...<br><small style="color:#8a7040;font-size:.75rem">[déchiffre avant de jeter]</small></div>
+  </div>
+</div>
+
+<!-- Fiche Aide-mémoire Morse flottante -->
+<div id="morse-sheet" class="morse-paper-float" style="display:none;">
+  <span class="morse-paper-close" onclick="document.getElementById('morse-sheet').style.display='none'">✕</span>
+  <h3>AIDE-MÉMOIRE — CODE MORSE</h3>
+  <div id="morse-table"></div>
+</div>
+
+<!-- Sous-titres / Statut radio à l'écran -->
+<div id="radio-status-bar"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  MODAL — CARTE LEAFLET                 -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-carte" class="modal-overlay">
+  <div class="modal-box" style="width:95vw;height:88vh;padding:0;overflow:hidden;position:relative;">
+    <span class="modal-close" onclick="closeModal('modal-carte')" style="z-index:1000;background:rgba(0,0,0,0.7);padding:.3rem .6rem;border-radius:3px;">✕</span>
+    <div id="map"></div>
+    <div style="position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background:rgba(10,6,2,0.85);color:#d4c890;font-family:'Special Elite',cursive;font-size:.8rem;padding:.5rem 1rem;z-index:1000;border:1px solid #3a2a10;">
+      🔍 Cherche le point coté de <strong>La Forge d'Ans</strong> — utilise la loupe
+    </div>
+    <!-- Loupe (draggable) -->
+    <div id="magnifier" style="position:absolute;width:90px;height:90px;border-radius:50%;border:3px solid rgba(200,170,80,0.8);background:rgba(255,240,200,0.12);z-index:800;top:40%;left:45%;cursor:grab;display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 0 0 1px rgba(200,170,80,0.3),inset 0 0 20px rgba(255,220,100,0.05);">
+      🔍
+    </div>
+    <!-- Altitude révélée -->
+    <div id="altitude-reveal" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,6,2,0.95);color:#D4820A;font-family:'Special Elite',cursive;font-size:1.4rem;padding:1.5rem 2rem;border:1px solid #D4820A;z-index:900;text-align:center;">
+      📍 LA FORGE D'ANS<br>
+      <span style="font-size:2.5rem;color:#FFD700;">ALT. 182 m</span><br>
+      <small style="font-size:.8rem;color:#8a7050;">Cette altitude est ta clé. Note-la.</small><br>
+      <button onclick="document.getElementById('altitude-reveal').style.display='none'" style="margin-top:.8rem;background:none;border:1px solid #D4820A;color:#D4820A;padding:.3rem .8rem;cursor:pointer;font-family:'Special Elite',cursive;">Noté ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  MODAL — CARNET / ÉCHIQUIER            -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-carnet" class="modal-overlay">
+  <div class="modal-box">
+    <span class="modal-close" onclick="closeModal('modal-carnet')">✕</span>
+    <h3>Échiquier de substitution — Réseau AS</h3>
+    <div class="note-margin">
+      La clé est le nombre trouvé sur la carte. Ordonne les chiffres, complète la grille.
+    </div>
+    <div id="cipher-grid-container" class="cipher-grid"></div>
+    <div class="note-margin" style="margin-top:1rem;">Message intercepté sous l'objet lourd :</div>
+    <div class="encoded-message" id="encoded-msg">
+      18-2 · 8-1-2 · 18-2-1-8 · 2-1-8-2-1 · 8-2-1 · 1-8 · 18-2-1 · 8-1
+    </div>
+    <div id="decoded-result" style="display:none;margin-top:1rem;padding:1rem;background:rgba(0,80,0,0.15);border:1px solid #1a6020;color:#1a4010;font-family:'Caveat',cursive;font-size:1.3rem;text-align:center;">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  MODAL — MACHINE À ÉCRIRE              -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-machine" class="modal-overlay">
+  <div class="modal-box">
+    <span class="modal-close" onclick="closeModal('modal-machine')">✕</span>
+    <h2 style="font-family:'Special Elite',cursive;color:#D4820A;font-size:1.2rem;margin-bottom:1rem;">
+      REMINGTON JUNIOR — LE FACTEUR
+    </h2>
+    <p style="font-family:'VT323',monospace;color:#666;font-size:.9rem;margin-bottom:.8rem;">
+      Tape le nom du village cible pour valider la transmission :
+    </p>
+    <div>
+      <div id="typewriter-paper" style="min-width:260px;text-align:center;"><span id="typed-text"></span><span id="type-cursor" style="animation:blink .7s step-start infinite">|</span></div>
+    </div>
+    <p class="key-hint">[ Tape au clavier · RETOUR ARRIÈRE pour corriger ]</p>
+    <div id="machine-feedback" style="min-height:1.5rem;margin-top:.8rem;font-family:'VT323',monospace;font-size:1rem;color:#888;"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  MODAL — JOURNAL                       -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-journal" class="modal-overlay">
+  <div class="modal-box" style="background:#e8dcc8;color:#2a1a00;width:min(600px, 95vw);max-height:90vh;">
+    <span class="modal-close" onclick="closeModal('modal-journal')">✕</span>
+    <h2 style="font-family:'Special Elite',cursive;text-align:center;border-bottom:2px solid #2a1a00;padding-bottom:.5rem;margin-bottom:1rem;font-size:2rem;">La Dépêche du Périgord</h2>
+    <div style="font-family:'Special Elite',cursive;font-size:0.9rem;text-align:center;margin-bottom:1.5rem;letter-spacing:.1em;">Mardi 3 août 1944 — Édition locale</div>
+    
+    <div style="column-count:2;column-gap:2rem;font-family:serif;font-size:0.95rem;text-align:justify;line-height:1.4;">
+      <p><strong>L'effort de guerre.</strong> Les autorités rappellent à la population que le couvre-feu est strictement maintenu à 22h. Toute infraction sera sévèrement punie.</p>
+      <p>Le ravitaillement reste difficile dans la région, malgré les promesses. Les tickets de rationnement du mois d'août sont disponibles à la mairie.</p>
+      
+      <h3 style="font-family:'Special Elite',cursive;font-size:1.1rem;margin:1.5rem 0 .5rem;">PETITES ANNONCES</h3>
+      <p>Cherche bicyclette en bon état, pneus récents. S'adresser à la boulangerie M.</p>
+      
+      <div style="border:2px solid #00aaff;padding:.5rem;margin:.5rem 0;background:rgba(0,170,255,0.1);position:relative;">
+        <div style="position:absolute;top:-10px;right:-10px;color:#00aaff;font-size:1.5rem;font-family:'Caveat',cursive;">!</div>
+        <strong>À VENDRE :</strong> Forge artisanale, outils complets. Vue imprenable. <strong style="color:#a00;">Alt. 182m.</strong> S'adresser au propriétaire, chemin des Résistants, Ans. Contacter : M. Dupont avant 22h.
+      </div>
+      
+      <p>Perdu chien berger, quartier de la gare. Récompense si ramené.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  ÉCRAN DE VICTOIRE                     -->
+<!-- ═══════════════════════════════════════ -->
+<div id="victory-screen">
+  <div id="victory-content">
+    <h2>TRANSMISSION REÇUE</h2>
+    <p style="font-family:'VT323',monospace;color:#888;font-size:1rem;">5 AOÛT 1944 — 00h17</p>
+    <div id="timer-display">--:--</div>
+    <p>
+      Le parachutage allié aura lieu cette nuit.<br>
+      Point de chute confirmé : <strong>CUBJAC</strong>, confluent de l'Auvézère.<br><br>
+      Résistants mobilisés. La Libération approche.
+    </p>
+    <p class="quote">« On ne meurt pas pour des idées, on meurt pour des hommes. »<br>— Le Facteur</p>
+  </div>
+</div>
+
+<!-- BOUTON AIDE -->
+<button id="hint-btn" onclick="showHint()" title="Besoin d'un indice ?">?</button>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  SCRIPTS                               -->
+<!-- ═══════════════════════════════════════ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/main.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

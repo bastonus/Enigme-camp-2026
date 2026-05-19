@@ -1,0 +1,654 @@
+/* ═══════════════════════════════════════════════════
+   OPÉRATION CUBJAC 2026 — CSS Principal
+   ═══════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Caveat:wght@400;700&family=VT323&display=swap');
+
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --amber:   #D4820A;
+  --cream:   #F5E9C8;
+  --dark:    #1A1008;
+  --green-uv:#00FF88;
+  --red:     #C0392B;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'Special Elite', cursive;
+  cursor: none; /* on remplace par curseur custom */
+}
+
+/* ══════════════════════════════════════════
+   ÉCRAN D'INTRODUCTION
+══════════════════════════════════════════ */
+#intro-screen {
+  position: fixed; inset: 0; z-index: 1000;
+  background: #000;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+}
+
+#intro-screen::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  pointer-events: none; opacity: .4;
+  animation: grain-shift 0.12s steps(1) infinite;
+}
+
+@keyframes grain-shift {
+  0%   { transform: translate(0,0); }
+  25%  { transform: translate(-2px, 1px); }
+  50%  { transform: translate(2px,-1px); }
+  75%  { transform: translate(-1px,2px); }
+  100% { transform: translate(1px,-2px); }
+}
+
+#teleype-box {
+  width: min(680px, 92vw);
+  padding: 2rem 2.5rem;
+  border: 1px solid #333;
+  background: rgba(10,8,4,0.95);
+  position: relative;
+}
+
+#teleype-box::before {
+  content: 'TRANSMISSION CHIFFRÉE — RÉSEAU AS';
+  position: absolute; top: -0.7rem; left: 1.5rem;
+  background: #000; color: #555;
+  font-size: 0.65rem; letter-spacing: .15em; padding: 0 .5rem;
+}
+
+#teletype-text {
+  font-family: 'VT323', monospace;
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  color: #B8A070;
+  line-height: 1.7;
+  min-height: 14em;
+  white-space: pre-wrap;
+}
+
+#teleype-cursor {
+  display: inline-block;
+  width: 0.55em; height: 1.1em;
+  background: #B8A070;
+  vertical-align: text-bottom;
+  animation: blink 0.7s step-start infinite;
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+
+#intro-skip {
+  margin-top: 2rem;
+  color: #444; font-size: 0.75rem; letter-spacing: .2em;
+  cursor: pointer; transition: color .3s;
+  font-family: 'VT323', monospace;
+}
+#intro-skip:hover { color: #888; }
+
+/* ══════════════════════════════════════════
+   TABLE PRINCIPALE
+══════════════════════════════════════════ */
+#scene {
+  position: fixed; inset: 0;
+  background: url('../img/table_bois.jpg') center/cover no-repeat;
+  background-color: #1a0d06;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 2s ease;
+}
+#scene.visible { opacity: 1; }
+
+/* Overlay sombre sur la texture bois (sans toucher au filter pour préserver mix-blend-mode) */
+#scene::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 1;
+  background: rgba(15, 8, 2, 0.42);
+  mix-blend-mode: normal;
+  pointer-events: none;
+}
+
+/* Vignettage + lampe */
+#vignette {
+  position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background: radial-gradient(ellipse 60% 55% at 50% 45%,
+    transparent 0%,
+    rgba(0,0,0,0.35) 40%,
+    rgba(0,0,0,0.75) 70%,
+    rgba(0,0,0,0.96) 100%);
+}
+
+/* Grain de film animé — z:3, sous les objets (z:10), pointer-events none */
+#scene::after {
+  content: '';
+  position: absolute; inset: -50%;
+  width: 200%; height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 3;
+  animation: grain-shift 0.1s steps(1) infinite;
+  opacity: .22;
+}
+
+/* ══════════════════════════════════════════
+   CURSEUR LAMPE TORCHE
+══════════════════════════════════════════ */
+#spotlight {
+  position: fixed;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  pointer-events: none; z-index: 4;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle,
+    rgba(255,220,140,0.18) 0%,
+    rgba(255,200,100,0.07) 35%,
+    transparent 70%);
+  mix-blend-mode: screen;
+  transition: opacity .4s;
+}
+
+#candle-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 400; /* couvre toute la page, sous les modales (500) */
+  background: radial-gradient(circle 120vw at 60.31% 4.53%, 
+    rgba(255, 140, 30, 0.28) 0%, 
+    rgba(255, 100, 10, 0.10) 50%, 
+    transparent 100%),
+    rgba(255, 140, 30, 0.05); /* ambiance jaune/ambre globale */
+  mix-blend-mode: screen;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+#scene.lamp-off #candle-glow {
+  opacity: 0;
+}
+
+/* ══════════════════════════════════════════
+   OBJETS SUR LA TABLE
+══════════════════════════════════════════ */
+.obj {
+  position: absolute;
+  cursor: pointer;
+  filter: drop-shadow(4px 8px 12px rgba(0,0,0,0.7));
+  transition: filter .25s, transform .25s;
+  z-index: 10;
+  user-select: none;
+}
+.obj:hover {
+  filter: drop-shadow(4px 10px 18px rgba(0,0,0,0.85)) brightness(1.12);
+  transform: translateY(-3px) scale(1.02);
+}
+.obj.float-anim { animation: float 4s ease-in-out infinite; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+
+/* Positions des objets — calées sur la texture bois réelle */
+.obj {
+  --rot: 0deg;
+  transform: rotate(var(--rot));
+  /* Valeurs par défaut pour les variables d'ombre radiale (fall-back) */
+  --sx: -15px; --sy: 20px; --blur: 25px; --op: 0.85;
+  filter: drop-shadow(var(--sx) var(--sy) var(--blur) rgba(0,0,0,var(--op)));
+}
+.obj:hover {
+  transform: translateY(-3px) scale(1.02) rotate(var(--rot));
+  filter: drop-shadow(calc(var(--sx)*1.2) calc(var(--sy)*1.2) calc(var(--blur) + 5px) rgba(0,0,0,var(--op))) brightness(1.05);
+}
+
+#obj-radio {
+  width: 44.57%; top: -22.13%; left: 66.08%;
+  --rot: 37deg;
+}
+
+#obj-cigare-box {
+  width: 18.81%; top: 66.29%; left: 22.06%;
+  --rot: -12deg;
+  z-index: 12;
+}
+
+#obj-cigare {
+  width: 12%; top: 68%; left: 24%;
+  --rot: -12deg;
+  z-index: 13;
+}
+
+#obj-carte {
+  width: 38.01%; top: 6.95%; left: 29.98%;
+  --rot: 0deg;
+}
+
+#obj-carnet {
+  width: 45.25%; top: 52.79%; left: 36.45%;
+  --rot: -16deg;
+  z-index: 15;
+}
+
+#obj-luger {
+  width: 40.01%; top: 36.98%; left: 71.22%;
+  --rot: -8deg;
+  z-index: 12;
+}
+
+#obj-boussole {
+  width: 15.05%; top: 25.82%; left: 66.43%;
+  --rot: -74deg;
+  z-index: 20;
+}
+
+#obj-lampe {
+  width: 10.09%; top: 4.53%; left: 60.31%;
+  --rot: 0deg;
+  filter: drop-shadow(0px 8px 12px rgba(0,0,0,0.9)); /* Ombre directe en dessous, la lumière vient d'elle */
+}
+#obj-lampe:hover {
+  filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.95)) brightness(1.1);
+}
+
+#obj-machine {
+  width: 35.97%; top: -20.34%; left: -0.42%;
+  --rot: -14deg;
+  z-index: 25;
+}
+
+#obj-journal {
+  width: 44.48%; top: 44.99%; left: -1.56%;
+  --rot: 4deg;
+}
+
+#obj-cle-morse {
+  width: 15.09%; top: 24.04%; left: 51.26%;
+  --rot: -6deg;
+}
+
+#obj-whisky {
+  width: 13.24%; top: 64.17%; left: 78.59%;
+  --rot: 0deg;
+  z-index: 30;
+}
+
+#obj-photo {
+  width: 26.6%; top: 46.68%; left: -7.32%;
+  --rot: -4deg;
+}
+
+/* ══════════════════════════════════════════
+   MODALS (carte, carnet, etc.)
+══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88);
+  z-index: 500;
+  display: none;
+  align-items: center; justify-content: center;
+  animation: fadeIn .3s ease;
+}
+.modal-overlay.open { display: flex; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-box {
+  background: #1c1409;
+  border: 1px solid #3a2a10;
+  max-width: 95vw; max-height: 92vh;
+  overflow-y: auto;
+  padding: 2rem;
+  position: relative;
+  box-shadow: 0 0 60px rgba(0,0,0,0.9);
+}
+
+.modal-close {
+  position: absolute; top: .8rem; right: 1rem;
+  color: #666; font-size: 1.4rem; cursor: pointer;
+  font-family: 'Special Elite', cursive;
+  transition: color .2s;
+}
+.modal-close:hover { color: #ccc; }
+
+
+
+
+
+/* ── Halo rouge ambiant autour de la radio ── */
+#radio-ambient-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 250%; height: 250%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 40, 40, 0.28) 0%, rgba(200, 20, 20, 0.05) 50%, transparent 70%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: -1; /* Derrière le poste radio */
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+#obj-radio.illuminated #radio-ambient-glow {
+  opacity: 1;
+}
+
+/* ── Sous-titres / Statut radio à l'écran ── */
+#radio-status-bar {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(12, 6, 2, 0.95);
+  border: 1.5px solid #8a7050;
+  color: #d4c890;
+  font-family: 'Special Elite', cursive;
+  font-size: 1.05rem;
+  padding: 10px 24px;
+  z-index: 10000;
+  border-radius: 3px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.9);
+  max-width: 80%;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+#radio-status-bar.visible {
+  opacity: 1;
+}
+
+/* ── Fiche Aide-mémoire Morse flottante ── */
+.morse-paper-float {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 280px;
+  background: #f4ecce;
+  color: #2b1f0c;
+  border: 1.5px solid #8c7355;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.65), inset 0 0 30px rgba(0,0,0,0.06);
+  font-family: 'Special Elite', cursive;
+  padding: 15px 12px;
+  z-index: 9999;
+  transform: rotate(-1.5deg);
+  border-radius: 3px;
+  animation: slideUpMorse 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.morse-paper-float h3 {
+  font-family: 'Special Elite', cursive;
+  font-size: 0.85rem;
+  color: #8c1c1c;
+  margin-top: 0;
+  margin-bottom: 8px;
+  text-align: center;
+  border-bottom: 1px dashed rgba(140, 28, 28, 0.25);
+  padding-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+.morse-paper-close {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #8c7355;
+  transition: color 0.2s;
+}
+.morse-paper-close:hover {
+  color: #8c1c1c;
+}
+@keyframes slideUpMorse {
+  from { transform: translateY(120%) rotate(5deg); opacity: 0; }
+  to { transform: translateY(0) rotate(-1.5deg); opacity: 1; }
+}
+
+/* ══════════════════════════════════════════
+   MODAL CARTE LEAFLET
+══════════════════════════════════════════ */
+#modal-carte .modal-box {
+  width: 95vw; height: 88vh; padding: 0;
+  overflow: hidden;
+}
+
+#map { width: 100%; height: 100%; }
+
+/* ══════════════════════════════════════════
+   MODAL CARNET + GRILLE
+══════════════════════════════════════════ */
+#modal-carnet .modal-box {
+  width: min(700px, 95vw);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23F5E8C0' width='100' height='100'/%3E%3Cline x1='0' y1='28' x2='100' y2='28' stroke='%23C8B880' stroke-width='.5'/%3E%3Cline x1='0' y1='56' x2='100' y2='56' stroke='%23C8B880' stroke-width='.5'/%3E%3Cline x1='0' y1='84' x2='100' y2='84' stroke='%23C8B880' stroke-width='.5'/%3E%3C/svg%3E");
+  color: #2a1a0a;
+}
+
+#modal-carnet h3 {
+  font-family: 'Caveat', cursive; font-size: 1.6rem;
+  color: #3a1a0a; border-bottom: 1px solid #c8b880; padding-bottom: .5rem; margin-bottom: 1rem;
+}
+
+.cipher-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px; margin: 1rem 0;
+}
+
+.cipher-cell {
+  border: 1px solid #8a6030;
+  background: rgba(255,250,220,0.6);
+  text-align: center; padding: .4rem .2rem;
+  font-family: 'Special Elite', cursive;
+  font-size: .85rem; color: #2a1a0a;
+  border-radius: 2px;
+}
+
+.cipher-cell.key-row {
+  background: rgba(180,100,0,0.15);
+  font-weight: bold; color: #6a2000;
+}
+
+.cipher-cell input {
+  width: 100%; border: none; background: transparent;
+  text-align: center; font-family: inherit; font-size: inherit;
+  color: #2a1500; outline: none;
+  text-transform: uppercase;
+}
+.cipher-cell input.correct { color: #1a6020; }
+.cipher-cell input.wrong   { color: #8a0000; }
+
+.encoded-message {
+  font-family: 'Caveat', cursive; font-size: 1.2rem;
+  letter-spacing: .08em; color: #3a1a0a;
+  margin-top: 1.5rem; padding: 1rem;
+  border: 1px dashed #8a6030;
+  background: rgba(255,240,200,0.5);
+  transition: opacity .3s;
+}
+
+.note-margin {
+  font-family: 'Caveat', cursive; font-size: .9rem;
+  color: #6a4020; border-left: 3px solid #8a6030;
+  padding-left: .8rem; margin: .8rem 0; font-style: italic;
+}
+
+/* ══════════════════════════════════════════
+   MODAL LUGER — MESSAGE CACHÉ
+══════════════════════════════════════════ */
+#modal-luger .modal-box {
+  width: min(480px, 92vw);
+  background: #f0e8c8;
+  color: #1a0a00;
+  font-family: 'Caveat', cursive;
+  transform: rotate(-1deg);
+}
+
+.secret-paper {
+  border: 1px solid #8a6030;
+  padding: 1.5rem; position: relative;
+}
+
+.secret-paper::before {
+  content: 'GEHEIMNIS'; position: absolute;
+  top: .8rem; right: .8rem;
+  font-family: 'Special Elite', cursive;
+  color: rgba(180,0,0,0.7); font-size: 1.1rem;
+  transform: rotate(8deg);
+  border: 2px solid rgba(180,0,0,0.5);
+  padding: .1rem .4rem;
+}
+
+/* ══════════════════════════════════════════
+   MODAL MACHINE À ÉCRIRE (FINALE)
+══════════════════════════════════════════ */
+#modal-machine .modal-box {
+  width: min(520px, 92vw);
+  background: #0d0d0d;
+  color: #d4c890;
+  text-align: center;
+}
+
+#typewriter-paper {
+  background: #F5F0E0;
+  color: #1a0a00;
+  font-family: 'Special Elite', cursive;
+  font-size: 1.6rem;
+  min-height: 3rem; padding: .8rem 1rem;
+  border: 1px solid #ccc;
+  border-top: 8px solid #888;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin: 1rem 0;
+  min-width: 200px;
+  display: inline-block;
+}
+
+#typewriter-paper.success {
+  animation: paper-flash .3s ease 3;
+  color: #1a5020;
+}
+
+@keyframes paper-flash {
+  0%, 100% { background: #F5F0E0; }
+  50%       { background: #c8f0d0; }
+}
+
+.key-hint {
+  font-family: 'VT323', monospace; font-size: .9rem;
+  color: #666; margin-top: .5rem;
+}
+
+/* ══════════════════════════════════════════
+   ENCRE UV / MODE LAMPE ÉTEINTE
+══════════════════════════════════════════ */
+#scene.lamp-off #vignette {
+  background: rgba(0,0,0,0.95);
+}
+#scene.lamp-off #spotlight { opacity: 0; }
+
+.uv-reveal {
+  position: absolute; pointer-events: none;
+  opacity: 0; transition: opacity 1s ease;
+  color: var(--green-uv);
+  text-shadow: 0 0 10px var(--green-uv), 0 0 20px var(--green-uv);
+  font-family: 'Caveat', cursive; font-size: 1rem;
+  z-index: 20;
+}
+#scene.lamp-off .uv-reveal { opacity: 1; }
+
+/* ══════════════════════════════════════════
+   TICKET DE TRAMWAY
+══════════════════════════════════════════ */
+#ticket-overlay {
+  position: fixed; inset: 0; z-index: 600;
+  background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center;
+  animation: fadeIn .3s;
+}
+#ticket-overlay.open { display: flex; }
+
+.ticket {
+  background: #f0e8b0;
+  border: 2px solid #8a7040;
+  width: min(340px, 88vw); padding: 1.5rem;
+  font-family: 'Caveat', cursive;
+  color: #2a1a00;
+  transform: rotate(-2deg);
+  box-shadow: 4px 6px 20px rgba(0,0,0,0.7);
+  position: relative;
+}
+.ticket-header {
+  font-family: 'Special Elite', cursive;
+  font-size: .75rem; text-align: center;
+  border-bottom: 1px dashed #8a7040; padding-bottom: .5rem; margin-bottom: .8rem;
+  letter-spacing: .08em; color: #5a3a00;
+}
+.ticket p { font-size: 1.05rem; line-height: 1.6; }
+.ticket .morse-line {
+  font-family: 'VT323', monospace; font-size: 1rem;
+  color: #5a3a00; margin-top: .8rem; word-break: break-all;
+}
+.ticket-close {
+  position: absolute; top: .5rem; right: .7rem;
+  cursor: pointer; font-size: 1rem; color: #8a6030;
+}
+
+/* ══════════════════════════════════════════
+   ÉCRAN DE VICTOIRE
+══════════════════════════════════════════ */
+#victory-screen {
+  position: fixed; inset: 0; z-index: 900;
+  background: rgba(0,0,0,0); pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; transition: background 2s;
+}
+#victory-screen.show {
+  background: rgba(0,0,0,0.9); pointer-events: all;
+}
+#victory-content {
+  opacity: 0; transition: opacity 1.5s 1s;
+  text-align: center; color: var(--cream);
+  max-width: 600px; padding: 2rem;
+}
+#victory-screen.show #victory-content { opacity: 1; }
+
+#victory-content h2 {
+  font-family: 'Special Elite', cursive;
+  font-size: 1.8rem; color: var(--amber);
+  border: 1px solid var(--amber); padding: .5rem 1.5rem;
+  display: inline-block; margin-bottom: 1.5rem;
+}
+#victory-content p { font-family: 'Caveat', cursive; font-size: 1.2rem; line-height: 1.7; }
+#victory-content .quote {
+  font-style: italic; color: #a89060; margin-top: 1.5rem; font-size: 1rem;
+}
+#timer-display {
+  font-family: 'VT323', monospace; font-size: 3rem;
+  color: var(--green-uv); margin: 1rem 0;
+}
+
+/* ══════════════════════════════════════════
+   BOUTON AIDE (discret)
+══════════════════════════════════════════ */
+#hint-btn {
+  position: fixed; bottom: 1rem; right: 1rem; z-index: 50;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.2);
+  font-size: .9rem; cursor: pointer;
+  transition: all .3s;
+  display: flex; align-items: center; justify-content: center;
+}
+#hint-btn:hover {
+  background: rgba(255,180,50,0.15);
+  border-color: rgba(255,180,50,0.3);
+  color: rgba(255,180,50,0.6);
+}
+
+/* Scrollbar discrète */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #3a2a10; border-radius: 3px; }
