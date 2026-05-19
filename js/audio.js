@@ -488,6 +488,7 @@ const AudioManager = (() => {
     if (!victoryChantAudio) {
       victoryChantAudio = new Audio('LE CHANT DES PARTISANS.mp3');
       victoryChantAudio.volume = 0.85;
+      victoryChantAudio.loop = true;
     }
     victoryChantAudio.currentTime = 0;
     victoryChantAudio.play().catch(e => console.warn('Chant des partisans play blocked:', e));
@@ -502,11 +503,34 @@ const AudioManager = (() => {
   const gunshotAudio = new Audio('audio/luger_sound_effect.wav');
 
   /* ── Bruit de tir (Luger) ── */
-  function playGunshot() {
+  function playGunshot(onEndedCallback) {
     gunshotAudio.currentTime = 0;
     gunshotAudio.volume = 0.8;
-    gunshotAudio.play().catch(e => console.warn('Gunshot audio play blocked:', e));
+    if (onEndedCallback) {
+      gunshotAudio.onended = () => {
+        gunshotAudio.onended = null;
+        onEndedCallback();
+      };
+    } else {
+      gunshotAudio.onended = null;
+    }
+    gunshotAudio.play().catch(e => {
+      console.warn('Gunshot audio play blocked:', e);
+      if (onEndedCallback) {
+        onEndedCallback();
+      }
+    });
   }
 
-  return { dot, dash, startTone, stopTone, typewriterKey, startIntroTypewriter, stopIntroTypewriter, startStatic, stopStatic, paperRustle, victory, clink, stamp, lightCandle, blowOutCandle, startRadioLondresVoice, makeRadioLondresVoiceSingle, stopRadioLondresVoice, setStaticVolume, setVoiceVolume, updateStationVolumes, beep, playChantDesPartisans, stopChantDesPartisans, playGunshot };
+  const glassBreakingAudio = new Audio('glass breaking.wav');
+
+  /* ── Bruit de vitre brisée (cadre photo) ── */
+  function playGlassBreaking() {
+    glassBreakingAudio.currentTime = 0;
+    glassBreakingAudio.volume = 0.95;
+    glassBreakingAudio.play().catch(e => console.warn('Glass breaking audio play blocked:', e));
+  }
+
+  return { dot, dash, startTone, stopTone, typewriterKey, startIntroTypewriter, stopIntroTypewriter, startStatic, stopStatic, paperRustle, victory, clink, stamp, lightCandle, blowOutCandle, startRadioLondresVoice, makeRadioLondresVoiceSingle, stopRadioLondresVoice, setStaticVolume, setVoiceVolume, updateStationVolumes, beep, playChantDesPartisans, stopChantDesPartisans, playGunshot, playGlassBreaking };
 })();
+

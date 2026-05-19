@@ -81,6 +81,16 @@ Date : 4 août 1944
   <!-- 3. Carte IGN — mini-carte Leaflet statique (non déplaçable) -->
   <div id="obj-carte" class="obj" onclick="openMapModal()" title="Carte d'état-major IGN 1950 — cliquez pour agrandir"></div>
 
+  <!-- 3b. Rapport F.F.I. physique sur la table (apparaît après succès carte) -->
+  <div id="obj-rapport-ffi" class="obj" title="Rapport de Localisation F.F.I. — Cliquez pour réouvrir" onclick="openModal('modal-map-success-paper')" style="display:none; position:absolute; top:20%; left:53%; width:10.5cqw; height:14cqw; background:url('page blanche.png') center/cover; border:1px solid rgba(0,0,0,0.15); box-shadow:-3px 5px 8px rgba(0,0,0,0.6); padding:0.8cqw; font-family:'Special Elite',cursive; font-size:0.75cqw; color:#1a0a00; transform:rotate(8deg); z-index:4; cursor:pointer; transition:transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='rotate(5deg) scale(1.05)'; this.style.boxShadow='-5px 8px 12px rgba(0,0,0,0.7)';" onmouseout="this.style.transform='rotate(8deg)'; this.style.boxShadow='-3px 5px 8px rgba(0,0,0,0.6)';">
+    <div style="border-bottom:1px solid #000; font-weight:bold; font-size:0.85cqw; margin-bottom:0.4cqw; text-align:left;">RAPPORT F.F.I.</div>
+    <div style="font-size:0.65cqw; text-align:left; line-height:1.2; opacity:0.8;">
+      CIBLE : CUBJAC<br>
+      TRANSMISSION REQ.<br>
+      TAPER EN MORSE...
+    </div>
+  </div>
+
 
   <!-- 5. Luger P08 -->
   <div id="luger-wrapper" class="obj" onclick="slideLuger()" title="Un Luger posé sur quelque chose…">
@@ -114,25 +124,40 @@ Date : 4 août 1944
     <img id="obj-carnet" src="img/carnet.png" alt="Carnet de codes" draggable="false" style="width:100%; height:auto; display:block; pointer-events:none;">
     <!-- Texte superposé sur les pages du carnet — style machine à écrire N&B -->
     <div id="carnet-overlay">
-      <!-- Page gauche -->
-      <div class="carnet-page">
-        <div class="carnet-title">Échiquier / Clé : 182</div>
-        <div class="carnet-grid">
-          <span class="cg-h">·</span><span class="cg-h">1</span><span class="cg-h">2</span><span class="cg-h">3</span><span class="cg-h">4</span><span class="cg-h">5</span>
-          <span class="cg-h">1</span><span class="cg-c">A</span><span class="cg-c">B</span><span class="cg-c">C</span><span class="cg-c">D</span><span class="cg-c">E</span>
-          <span class="cg-h">2</span><span class="cg-c">F</span><span class="cg-c">G</span><span class="cg-c">H</span><span class="cg-c">I</span><span class="cg-c">J</span>
-          <span class="cg-h">3</span><span class="cg-c">K</span><span class="cg-c">L</span><span class="cg-c">M</span><span class="cg-c">N</span><span class="cg-c">O</span>
-          <span class="cg-h">4</span><span class="cg-c">P</span><span class="cg-c">Q</span><span class="cg-c">R</span><span class="cg-c">S</span><span class="cg-c">T</span>
-          <span class="cg-h">5</span><span class="cg-c">U</span><span class="cg-c">V</span><span class="cg-c">W</span><span class="cg-c">X</span><span class="cg-c">Y</span>
-          <span class="cg-h">6</span><span class="cg-c">Z</span><span class="cg-c">.</span><span class="cg-c">.</span><span class="cg-c">.</span><span class="cg-c">.</span>
+      <!-- Page gauche : Grille et Message codé -->
+      <div class="carnet-page" style="justify-content: flex-start; gap: 4%;">
+        <div class="carnet-title" style="font-size: 1.8cqw; margin-bottom: 2%;">ÉCHIQUIER DE SUBSTITUTION</div>
+        <div class="carnet-grid" id="cipher-grid-container" style="grid-template-columns: repeat(10, 1fr); gap: 0.4cqw; margin-bottom: 4%;">
+          <!-- Rempli dynamiquement par renderActiveGrid() dans js/main.js -->
         </div>
-        <div class="carnet-note">Clé = altitude IGN</div>
+        <div class="carnet-note" style="font-size: 1.5cqw; margin-top: 1%; font-weight: bold; border-top: 1px dashed #000; padding-top: 3%;">
+          MESSAGE SECRÈT CODÉ :
+        </div>
+        <div class="carnet-encoded" style="font-size: 1.8cqw; margin-top: 1%; letter-spacing: 0.05em; font-weight: bold; text-align: center;">
+          9 · 80 · 1 · 85 · 5 · 86 · 22
+        </div>
+        <div class="carnet-decoded" style="font-size: 1.35cqw; margin-top: 1%; color: #000; font-style: italic; text-align: center; padding-top: 0;">
+          [ Clé 1 ]
+        </div>
       </div>
-      <!-- Page droite -->
-      <div class="carnet-page">
-        <div class="carnet-title">Msg. codé</div>
-        <div class="carnet-encoded">5·6·8-7·2 / 2-8·8-6·2<br>4·6·8-5·2-8 / 8-9·2</div>
-        <div class="carnet-decoded">« Azimut 245°<br>depuis Tourtoirac.<br>Le confluent. »</div>
+      <!-- Page droite : Énigme d'association des clés -->
+      <div class="carnet-page" style="justify-content: flex-start; gap: 3%; text-align: left; padding: 4% 6%;">
+        <div class="carnet-title" style="font-size: 1.7cqw; margin-bottom: 2%; border-bottom: 1.5px solid #000; padding-bottom: 2%; text-align: left;">AS — DIRECTIVES DECIPHER</div>
+        <p style="font-family: 'Special Elite', cursive; font-size: 1.4cqw; color: #000; line-height: 1.35; margin: 0 0 2% 0;">
+          Pour déverrouiller le décryptage des ordres secrets sur la Remington, rassemblez les trois codes clandestins de l'opération :
+        </p>
+        <ol style="font-family: 'Special Elite', cursive; font-size: 1.3cqw; color: #000; line-height: 1.35; margin: 0 0 3% 0; padding-left: 6%;">
+          <li style="margin-bottom: 1.5%;">L'Encre du Carnet [Clé 1]</li>
+          <li style="margin-bottom: 1.5%;">La Voix de la Radio [Clé 2]</li>
+          <li style="margin-bottom: 1.5%;">Le Verre du Cadre [Clé 3]</li>
+        </ol>
+        <p style="font-family: 'Special Elite', cursive; font-size: 1.3cqw; color: #8c1c1c; font-weight: bold; line-height: 1.35; margin: 0; border: 1px dashed #8c1c1c; padding: 4%; background: rgba(0,0,0,0.02);">
+          <strong>COMBINAISON TYPEWRITER :</strong><br>
+          Tapez les trois codes à la suite, dans l'ordre exact : 
+          <span style="border-bottom: 1.5px solid #8c1c1c;">Carnet</span> puis 
+          <span style="border-bottom: 1.5px solid #8c1c1c;">Radio</span> puis 
+          <span style="border-bottom: 1.5px solid #8c1c1c;">Cadre</span>, tout en attaché (sans espaces ni tirets) sur la Remington.
+        </p>
       </div>
     </div>
   </div>
@@ -171,13 +196,13 @@ Date : 4 août 1944
   
   <!-- Papier caché sous la photo de Roland Grandou, calé au z-index 13 -->
   <div id="photo-paper" onclick="zoomPaper('photo')" style="position:absolute; top:49%; left:-3%; opacity:0; filter:brightness(0.2) contrast(0.8) sepia(0.65) hue-rotate(-12deg) drop-shadow(1px 2px 4px rgba(0,0,0,0.95)); z-index:13; pointer-events:none; transition:transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.7s ease, filter 0.7s ease; transform: rotate(-4deg) scale(0.92); width:17vw; padding:1.2rem 1rem; background:url('paper.png') center/cover no-repeat; box-shadow:2px 4px 8px rgba(0,0,0,0.5); border-radius:1px; font-family:'Special Elite',cursive; color:#000; font-size:0.8rem; line-height:1.2; text-align:left; cursor:pointer;">
-    <div style="font-weight:bold; font-size:0.8rem; text-align:center; margin-bottom:0.3rem;">R. GRANDOU</div>
+    <div style="font-weight:bold; font-size:0.8rem; text-align:left; margin-bottom:0.3rem;">R. GRANDOU</div>
     <div style="border-bottom:1px solid #000; margin-bottom:0.4rem;"></div>
     <div style="font-size:0.6rem; line-height:1.3;">
       "Camarades...<br>
       Ne cessez jamais le combat."
     </div>
-    <div style="font-size:0.2rem; font-style:italic; margin-top:0.2rem; text-align:center;">[Clic pour zoom]</div>
+    <div style="font-size:0.2rem; font-style:italic; margin-top:0.2rem; text-align:left;">[Clic pour zoom]</div>
   </div>
 
 </div><!-- /scene -->
@@ -302,36 +327,7 @@ Date : 4 août 1944
   </div>
   <!-- Conteneur Leaflet plein écran -->
   <div id="fullscreen-map" style="width:100%; height:100%;"></div>
-  <!-- Rapporteur draggable -->
-  <div id="rapporteur" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:280px; height:280px; cursor:move; z-index:850; touch-action:none; user-select:none;">
-    <svg id="rapporteur-svg" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" width="280" height="280" style="pointer-events:none; overflow:visible;">
-      <!-- Demi-cercle rapporteur (fond blanc semi-transparent, bordure noire épaisse) -->
-      <path d="M10,140 A130,130 0 0,1 270,140 Z" fill="rgba(255,255,255,0.75)" stroke="#111" stroke-width="2.5"/>
-      <circle cx="140" cy="140" r="4" fill="#111"/>
-      <!-- Ticks et labels du rapporteur -->
-      <!-- Générés via JS dans initModalMap() -->
-      <!-- Ligne d'azimut (bras mobile) -->
-      <line id="rapporteur-arm" x1="140" y1="140" x2="140" y2="10" stroke="#e74c3c" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrowhead)"/>
-      <defs>
-        <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="4" refY="3" orient="auto">
-          <polygon points="0 0, 8 3, 0 6" fill="#e74c3c"/>
-        </marker>
-      </defs>
-      <!-- Point central -->
-      <circle id="rapporteur-center" cx="140" cy="140" r="5" fill="#e74c3c" opacity="0.9"/>
-      <circle cx="140" cy="140" r="2" fill="#fff"/>
-    </svg>
-    <!-- Instructions intégrées au rapporteur -->
-    <div style="position:absolute; top:70px; left:50%; transform:translateX(-50%); width:200px; text-align:center; pointer-events:none;">
-      <div style="font-family:'Special Elite',cursive; font-size:12px; color:#111; font-weight:bold; line-height:1.3; opacity:0.85; margin-bottom: 6px;">
-        Prenez l'azimut du point de chute avec les flèches du clavier ◀ ▶
-      </div>
-      <div style="display:inline-block; background:rgba(255,255,255,0.9); border:1px solid #111; padding:2px 10px; border-radius:4px;">
-        <span style="font-family:'Special Elite',cursive; color:#111; font-size:0.75rem; font-weight:bold;">AZIMUT : </span>
-        <span id="rap-angle-display" style="font-family:'VT323',monospace; font-size:1.4rem; color:#e74c3c; font-weight:bold;">0°</span>
-      </div>
-    </div>
-  </div>
+
 </div>
 
 <!--  MODAL — BOUSSOLE D'AZIMUT            -->
@@ -339,9 +335,9 @@ Date : 4 août 1944
 <div id="modal-boussole" class="modal-overlay">
   <div class="modal-box" style="position:relative;">
     <span class="modal-close" onclick="closeModal('modal-boussole')">✕</span>
-    <div class="compass-modal-content" style="display:flex; flex-direction:column; align-items:center; width:100%;">
-      <h3 style="font-family:'Special Elite', cursive; text-align:center; color:#d4c890; margin-top:0; margin-bottom:5px; font-size:1.4rem; letter-spacing:1px;">BOUSSOLE D'AZIMUT</h3>
-      <p id="compass-instruction" style="font-family:'Special Elite', cursive; text-align:center; color:#a89060; font-size:0.85rem; margin-bottom:1.2rem; line-height:1.4;">Orientez la boussole pour viser le village où a lieu le parachutage. L'azimut est noté sur le document déchiffré.</p>
+    <div class="compass-modal-content" style="display:flex; flex-direction:column; align-items:flex-start; width:100%;">
+      <h3 style="font-family:'Special Elite', cursive; text-align:left; color:#d4c890; margin-top:0; margin-bottom:12px; font-size:1.4rem; letter-spacing:1px; width:100%;">BOUSSOLE D'AZIMUT</h3>
+      <p id="compass-instruction" style="font-family:'Special Elite', cursive; text-align:left; color:#a89060; font-size:0.85rem; margin-bottom:1.2rem; line-height:1.45; width:100%;">Trouver la direction prise par l’agent clandestin depuis sa ville de départ. Le lieutenant Grandou s'est servi de cette boussole pour s'orienter et fuir d'une ville à une autre lors de sa traque. Faites tourner le cadran pour chercher où l'aiguille se bloque physiquement afin de relever l'azimut.</p>
       
       <div class="compass-game-area" style="position:relative; width:280px; height:305px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; margin:10px 0;">
         <!-- Index marker indicating the top (index pointer) -->
@@ -464,13 +460,9 @@ Date : 4 août 1944
       </div>
       
       <!-- Angle display -->
-      <div class="compass-readout" style="text-align:center; margin-top:0.8rem; user-select:none;">
+      <div class="compass-readout" style="text-align:left; width:100%; margin-top:0.8rem; user-select:none;">
         <span style="font-family:'Special Elite', cursive; font-size:0.95rem; color:#888;">AZIMUT RÉGLÉ : </span>
         <span id="compass-angle-val" style="font-family:'VT323', monospace; font-size:2.2rem; color:#ffd700; font-weight:bold; letter-spacing:1px; vertical-align:middle; line-height:1;">0°</span>
-      </div>
-      
-      <div id="compass-success-msg" style="display:none; text-align:center; color:#2ecc71; font-family:'Special Elite', cursive; font-size:0.9rem; margin-top:0.6rem; background:rgba(46, 204, 113, 0.12); padding:6px 12px; border-radius:4px; border:1px dashed rgba(46,204,113,0.3); width:90%; box-sizing:border-box;">
-        ✓ Cap verrouillé — azimut confirmé depuis Tourtoirac.
       </div>
     </div>
   </div>
@@ -513,9 +505,9 @@ Date : 4 août 1944
 
       <!-- Moitié droite : Adresse / Enregistrement -->
       <div style="flex:0.8; padding: 4%; position:relative; z-index:10; display:flex; flex-direction:column;">
-        <!-- Faux timbre -->
+        <!-- Timbre Historique -->
         <div style="display:flex; justify-content:flex-end; margin-bottom:5%;">
-          <div style="width:7cqw; height:8cqw; border:1px dashed #a09070; background:#e8dcc8; display:flex; align-items:center; justify-content:center; color:#a09070; font-family:'Special Elite',cursive; font-size:1.5cqw;">TIMBRE</div>
+          <img src="timbre.png" alt="Timbre historique" style="width:8.5cqw; height:10cqw; object-fit:contain; filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.35)); transform: rotate(-2deg); border-radius: 1px; cursor: pointer; transition: transform 0.3s ease;" onmouseover="this.style.transform='rotate(1deg) scale(1.05)'" onmouseout="this.style.transform='rotate(-2deg)'" onerror="this.onerror=null; this.src='timbre.jpg';">
         </div>
         
         <!-- Lignes d'adresse transformées en inputs -->
@@ -556,10 +548,45 @@ Date : 4 août 1944
 <!--  MODAL — ZOOM SUR LES MESSAGES           -->
 <!-- ═══════════════════════════════════════ -->
 <div id="modal-paper-zoom" class="modal-overlay">
-  <div class="modal-box" id="paper-zoom-box" style="width: min(450px, 90vw); background: url('paper.png') center/cover no-repeat; border-radius: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.95); padding: 2.5rem 2.2rem; color: #000; font-family: 'Special Elite', cursive; text-align: center; position: relative;">
+  <div class="modal-box" id="paper-zoom-box" style="width: min(450px, 90vw); background: url('paper.png') center/cover no-repeat; border-radius: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.95); padding: 2.5rem 2.2rem; color: #000; font-family: 'Special Elite', cursive; text-align: left; position: relative;">
     <span class="modal-close" onclick="closeModal('modal-paper-zoom')" style="color: #000; border-color: rgba(0,0,0,0.2); top: 10px; right: 10px;">✕</span>
     <div id="paper-zoom-content" style="font-size: 1.1rem; line-height: 1.6; color: #000;">
       <!-- Populated dynamically -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  MODAL — PARACHUTAGE IDENTIFIÉ (CARTE)   -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-map-success-paper" class="modal-overlay" onclick="if(event.target === this) closeModal('modal-map-success-paper')">
+  <div class="modal-box">
+    <span class="modal-close" onclick="closeModal('modal-map-success-paper')" style="color: #000; border-color: rgba(0,0,0,0.2); top: 15px; right: 15px;">✕</span>
+    
+    <div style="font-weight: bold; font-size: 1.25rem; text-align: left; margin-bottom: 1.2rem; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 0.5rem;">
+      RAPPORT DE LOCALISATION — F.F.I.
+    </div>
+    
+    <p style="font-size: 1.05rem; line-height: 1.5; margin-bottom: 1rem;">
+      <strong>ZONE DE PARACHUTAGE IDENTIFIÉE : CUBJAC</strong>
+    </p>
+    
+    <p style="font-size: 1rem; line-height: 1.5; margin-bottom: 1rem; font-style: italic;">
+      Grâce aux recoupements de l'azimut 320° depuis Montignac, la cible de l'embuscade et du parachutage allié a été précisément géolocalisée sur la commune de Cubjac.
+    </p>
+    
+    <p style="font-size: 1rem; line-height: 1.5; margin-bottom: 1rem; font-weight: bold;">
+      Éclaireurs de la Résistance, la cible est verrouillée ! 
+      Pour déclencher l'assaut et sécuriser le parachutage d'armes, vous devez immédiatement transmettre cette position en code Morse au lieutenant-colonel britannique Tommy Macpherson ("l'Écossais") de la section de liaison alliée.
+    </p>
+    
+    <div style="border-top: 1.5px dashed #000; margin-top: 1rem; padding-top: 1rem; font-size: 1rem; font-weight: bold; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 2px;">
+      <strong style="color: #8c1c1c;">ORDRE DE TRANSMISSION :</strong><br>
+      Utilisez la clé télégraphique et tapez le mot <span style="font-size: 1.2rem; border-bottom: 2px solid #8c1c1c;">CUBJAC</span> en code Morse pour valider définitivement la réussite de l'opération.
+    </div>
+    
+    <div style="text-align: right; margin-top: 1.5rem; font-size: 0.9rem; font-weight: bold; opacity: 0.8;">
+      — WHISKY, P.C. Périgord
     </div>
   </div>
 </div>

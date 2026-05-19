@@ -30,6 +30,12 @@ const State = {
   typewriterDecrypted: false,
 };
 
+// Codes secrets basés sur l'univers et les personnages de la Résistance à Cubjac 2026
+const CARNET_CODE = "GRANDOU";
+const FRAME_CODE = "LIBERTE";
+const RADIO_CODE = "ROGER";
+
+
 // Map & Protractor global references
 let map = null;
 let protractor = null;
@@ -47,13 +53,13 @@ let letterTimer = null;
 let wordTimer = null;
 
 const HINTS = [
-  "Commence par ouvrir la boîte à cigares — soulève le cigare.",
-  "Allume le poste radio et écoute attentivement. Note les sons courts (·) et longs (—).",
-  "Le message Morse te donne un nombre. Cherche ce nombre sur la carte IGN.",
-  "L'altitude trouvée (182) est la clé de la grille du carnet.",
-  "Glisse le Luger — il repose sur un message chiffré. Utilise la grille pour le décoder.",
-  "Retourne la boussole : l'azimut 320° depuis Montignac pointe sur le village cible.",
-  "Tape CUBJAC sur la machine à écrire pour valider.",
+  "Commencez par déchiffrer la grille de substitution du carnet pour trouver la première clé secrète.",
+  "Éteignez la bougie pour révéler le viseur laser vert du Luger. Visez et tirez sur le cadre photo dans le noir pour briser le verre et découvrir la deuxième clé.",
+  "Ouvrez la boîte à cigares, faites rouler le cigare pour dévoiler la fréquence radio secrète (58.7 MHz). Allumez la radio sur cette fréquence pour entendre le code Morse secret et obtenir la troisième clé.",
+  "Combinez les trois clés secrètes dans l'ordre conseillé par le carnet : [CARNET]-[RADIO]-[CADRE] pour former le mot de passe final.",
+  "Tapez ce mot de passe sans espaces ni tirets (GRANDOUROGERLIBERTE) sur la Remington pour décrypter l'ordre de mission d'état-major.",
+  "Lisez l'ordre de mission Remington : il donne des indications sur le lieutenant Roland Grandou et son départ de Montignac. Manipulez sa boussole pour trouver l'azimut bloqué à 320°.",
+  "Pour la victoire finale des F.F.I., utilisez la clé télégraphique Morse et transmettez le mot 'CUBJAC' pour confirmer la réussite de l'embuscade."
 ];
 
 /* ──────────────────────────────────────
@@ -66,7 +72,7 @@ ORDRE DE MISSION N°4 — CONFIDENTIEL
 
 DATE : 4 AOÛT 1944 — 21H30
 
-Nos réseaux ont perdu le contact avec l'agent FACTEUR.
+Nos réseaux ont perdu le contact avec le lieutenant ROLAND GRANDOU.
 Son dernier message Morse indiquait un point de parachutage
 allié prévu pour cette nuit. Il n'a pas pu transmettre
 les coordonnées complètes.
@@ -632,7 +638,7 @@ function updateRadioTuningUI(freq) {
 }
 
 /* Séquence Morse audio (synthétisée) */
-const MORSE_MESSAGE = 'MONTIGNAC';
+const MORSE_MESSAGE = 'ROGER';
 
 function updateMorseSignalProperties() {
   if (!morseAudioCtx || !morseMasterGain || !morseMasterFilter) return;
@@ -1079,32 +1085,13 @@ function initRapporteurKeyboard() {
 let lugerSlid = false;
 function slideLuger() {
   if (!State.lampOn) {
-    showToast("La croix verte indique la gâchette. Visez le cigare en pressant la croix !");
+    showToast("La croix verte indique la gâchette. Pressez la croix pour faire feu !");
   } else {
     showToast("Un pistolet Luger P08 d'officier allemand... Le canon est froid.");
   }
 }
 
-/* Modal Luger inline */
-(function() {
-  // Créer la modal luger dynamiquement
-  const div = document.createElement('div');
-  div.id = 'modal-luger'; div.className = 'modal-overlay';
-  div.innerHTML = `
-    <div class="modal-box" style="width:min(480px,92vw);background:#f0e8c8;color:#1a0a00;font-family:'Caveat',cursive;transform:rotate(-1deg);">
-      <span class="modal-close" onclick="closeModal('modal-luger')">✕</span>
-      <div class="secret-paper">
-        <p style="font-family:'Special Elite',cursive;font-size:.85rem;margin-bottom:1rem;">Ordre de mission — Réseau AS<br>Codé selon échiquier habituel :</p>
-        <p style="font-size:1.3rem;letter-spacing:.05em;font-weight:bold;color:#3a1a00;line-height:2;">
-          8-4 · 8-6 · 8-5 · 2-8 · 8-1 · 9 · 8-5 · 1 · 4
-        </p>
-        <p style="margin-top:1rem;font-size:.9rem;color:#6a4020;font-style:italic;">
-          [Déchiffre avec la grille du carnet]
-        </p>
-      </div>
-    </div>`;
-  document.body.appendChild(div);
-})();
+/* Modal Luger inline - Obsolete et Supprimé */
 
 /* ──────────────────────────────────────
    BOUSSOLE — RETOURNEMENT (DÉSACTIVÉ)
@@ -1171,7 +1158,7 @@ function openCompassModal() {
   
   const instruction = document.getElementById('compass-instruction');
   if (instruction) {
-    instruction.textContent = "Orientez la boussole pour viser le village où a lieu le parachutage. L'azimut est noté sur le document déchiffré.";
+    instruction.textContent = "Trouvez la direction prise par l'agent clandestin. Faites tourner le cadran pour chercher où l'aiguille se bloque physiquement pour relever l'azimut.";
     instruction.style.display = 'block';
   }
   
@@ -1200,6 +1187,7 @@ function startCompassDrag(e) {
 }
 
 function moveCompassDrag(e) {
+  if (State.boussoleOriented) return;
   if (!compassDragState.dragging) return;
   
   const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -1261,12 +1249,6 @@ function triggerCompassSuccess() {
   State.boussoleOriented = true;
   AudioManager.clink();
   AudioManager.stamp();
-  
-  const successMsg = document.getElementById('compass-success-msg');
-  if (successMsg) successMsg.style.display = 'block';
-  
-  const instruction = document.getElementById('compass-instruction');
-  if (instruction) instruction.style.display = 'none';
   // La modale reste ouverte — l'utilisateur ferme avec ✕
 }
 
@@ -1309,53 +1291,35 @@ function zoomPaper(paperId) {
       break;
     case 'photo':
       html = `
-        <div style="font-size: 1.05rem; line-height: 1.4; text-align: center; font-style: italic; margin-bottom: 0.6rem; border-bottom: 2px dashed #000; padding-bottom: 0.6rem; font-family: 'Special Elite', cursive;">
-          "Camarades, ne cessez jamais le combat. Notre liberté est proche."<br>
-          <span style="font-size: 0.85rem; font-weight: bold; display: block; text-align: right; margin-top: 0.2rem;">— R. GRANDOU</span>
-        </div>
-        <div style="font-weight:bold; font-size:1.15rem; text-align:center; margin-bottom:0.4rem; text-transform:uppercase; font-family:'Special Elite', cursive; color: #8c1c1c;">
-          ALPHABET MORSE DE LA RÉSISTANCE
-        </div>
-        <div style="border-bottom:2px solid #000; margin-bottom:0.8rem;"></div>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-family: 'Special Elite', monospace; font-size: 1.05rem; text-align: left; padding: 5px;">
-          <div><strong>A</strong> ·−</div>
-          <div><strong>B</strong> −···</div>
-          <div><strong>C</strong> −·−·</div>
-          <div><strong>D</strong> −··</div>
-          <div><strong>E</strong> ·</div>
-          <div><strong>F</strong> ··−·</div>
-          <div><strong>G</strong> −−·</div>
-          <div><strong>H</strong> ····</div>
-          <div><strong>I</strong> ··</div>
-          <div><strong>J</strong> ·−−−</div>
-          <div><strong>K</strong> −·−</div>
-          <div><strong>L</strong> ·−··</div>
-          <div><strong>M</strong> −−</div>
-          <div><strong>N</strong> −·</div>
-          <div><strong>O</strong> −−−</div>
-          <div><strong>P</strong> ·−−·</div>
-          <div><strong>Q</strong> −−·−</div>
-          <div><strong>R</strong> ·−·</div>
-          <div><strong>S</strong> ···</div>
-          <div><strong>T</strong> −</div>
-          <div><strong>U</strong> ··−</div>
-          <div><strong>V</strong> ···−</div>
-          <div><strong>W</strong> ·−−</div>
-          <div><strong>X</strong> −··−</div>
-          <div><strong>Y</strong> −·−−</div>
-          <div><strong>Z</strong> −−··</div>
-        </div>
-        <div style="border-top:1px dashed #000; margin-top:0.8rem; padding-top:0.6rem; font-size:0.9rem; font-style:italic; text-align:center;">
-          "Transmettez l'espoir à travers les ondes."
+        <div style="font-family: 'Special Elite', cursive; font-size: 1.05rem; line-height: 1.45; color: #000; background: url('paper.png') center/cover; padding: 1.5rem; border: 2px solid #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.15); text-align: left;">
+          <div style="font-weight: bold; font-size: 1.25rem; text-align: left; margin-bottom: 0.8rem; text-transform: uppercase; color: #000; border-bottom: 2px solid #000; padding-bottom: 0.4rem;">
+            NOTE CONFIDENTIELLE — LNT. GRANDOU
+          </div>
+          <p style="margin-bottom: 0.8rem; font-style: italic;">
+            "La division SS Das Reich remonte du Sud et sème la mort sur son passage... Alors que nos compagnons s'organisent au sein du maquis de l'AS à Oradour-sur-Glane, j'ai rejoint pour ma part notre maquis secret de l'AS, bien caché dans les forêts du Périgord. Face à la barbarie et la trahison, nous ne plierons pas. Nous tiendrons nos positions coûte que coûte."
+          </p>
+          <p style="margin-bottom: 0.8rem; font-weight: bold;">
+            Que notre combat serve la Patrie. Notre mot d'ordre absolu pour guider le pays vers le grand jour de la Libération est : <span style="font-size: 1.25rem; border-bottom: 2px solid #000;">LIBERTE</span>.
+          </p>
+          <div style="text-align: right; margin-top: 1rem; font-weight: bold;">
+            — R.G.
+          </div>
         </div>
       `;
       break;
     case 'boussole':
       html = `
-        <div style="font-weight:bold; font-size:1.35rem; margin-bottom:0.6rem;">NOTES DE T.M.</div>
-        <div style="border-bottom:2px solid #000; margin-bottom:1rem;"></div>
-        <div style="font-weight:bold; font-size:1.6rem; margin-bottom:0.6rem; color: #8c1c1c;">AZIMUT : 320°</div>
-        <div style="font-size:1rem; font-style:italic;">Depuis Montignac</div>
+        <div style="font-family: 'Special Elite', cursive; font-size: 1.1rem; line-height: 1.45; color: #000; background: url('paper.png') center/cover; padding: 1.5rem; border: 2px solid #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.15); text-align: left;">
+          <div style="font-weight: bold; font-size: 1.3rem; text-align: left; margin-bottom: 0.8rem; text-transform: uppercase; color: #000; border-bottom: 2px solid #000; padding-bottom: 0.4rem;">
+            BOUSSOLE DE ROLAND GRANDOU
+          </div>
+          <p style="margin-bottom: 0.8rem; font-style: italic;">
+            Cette boussole appartenait au lieutenant Grandou. Son aiguille est grippée et se fige précisément sur une direction.
+          </p>
+          <p style="font-weight: bold; text-align: left; margin-top: 1rem;">
+            Faites tourner le cadran de la boussole pour chercher où le mécanisme se bloque physiquement et relever l'azimut.
+          </p>
+        </div>
       `;
       break;
     case 'whisky':
@@ -1370,6 +1334,22 @@ function zoomPaper(paperId) {
   
   contentEl.innerHTML = html;
   openModal('modal-paper-zoom');
+}
+
+/* Zoom de lisibilité pour le carnet de décryptage */
+function toggleCarnetZoom() {
+  const wrapper = document.getElementById('carnet-wrapper');
+  const backdrop = document.getElementById('carnet-backdrop');
+  if (!wrapper || !backdrop) return;
+
+  AudioManager.paperRustle();
+
+  const isZoomed = wrapper.classList.toggle('zoomed');
+  if (isZoomed) {
+    backdrop.style.display = 'block';
+  } else {
+    backdrop.style.display = 'none';
+  }
 }
 
 /* ──────────────────────────────────────
@@ -1456,9 +1436,10 @@ function initTypewriterKeyboardEvents() {
         AudioManager.typewriterKey();
         paper.scrollTop = paper.scrollHeight;
         
-        // Détecter MONTIGNAC à la fin de la saisie
-        const cleanText = paper.textContent.trim().toUpperCase();
-        if (cleanText.endsWith('MONTIGNAC')) {
+        // Détecter la bonne combinaison de clés (tolérant aux espaces/tirets)
+        // Accepte soit l'ordre recommandé (GRANDOUROGERLIBERTE) soit l'ordre secondaire (GRANDOULIBERTEROGER)
+        const cleanText = paper.textContent.replace(/[\s-]/g, '').toUpperCase();
+        if (cleanText.endsWith('GRANDOUROGERLIBERTE') || cleanText.endsWith('GRANDOULIBERTEROGER')) {
           triggerMagicVictoryTyping();
         }
       }
@@ -1469,21 +1450,17 @@ function initTypewriterKeyboardEvents() {
 const MAGIC_REVEAL_TEXT =
 `
 ──────────────────────
-ORDRE DE MISSION DE T.M.
+ORDRE DE MISSION DE T.M. (TOMMY MACPHERSON)
 5 AOÛT 1944 — 00H17
 
-COORDONNÉES DE DÉPART : MONTIGNAC.
-UTILISEZ LA CARTE IGN POUR RECHERCHER
-LE POINT DE CHUTE DU PARACHUTAGE.
+A TOUS LES RESISTANTS DE L'AS ET DES FTP :
+LE LIEUTENANT ROLAND GRANDOU A ETE FUSILLE PAR LA GESTAPO.
 
-RÉGLEZ LE RAPPORTEUR SUR MONTIGNAC.
-AZIMUT DU CONFLUENT : 320°.
+SON RETOUR D'INSPECTION COMMENÇAIT DEPUIS LE MAQUIS DE MONTIGNAC. RETRACEZ SON TRAJET POUR DÉCOUVRIR LE LIEU DE PARACHUTAGE D'ARMES.
 
-UNE FOIS LE POINT DE CHUTE IDENTIFIÉ,
-TRANSMETTEZ SON NOM EN MORSE À L'AIDE
-DE LA CLÉ MORSE POUR CONFIRMER L'OPÉRATION.
+VIVE LA FRANCE.
 
-— WHISKY —`;
+— TOMMY —`;
 
 function triggerMagicVictoryTyping() {
   typewriterAutoTyping = true;
@@ -1512,6 +1489,8 @@ function triggerMagicVictoryTyping() {
       if (hint) {
         hint.textContent = "Ordre de mission décrypté. Fermez la machine pour continuer.";
       }
+      // Automatiquement valider la carte si le rapporteur est déjà bien positionné
+      checkMapSuccess();
       return;
     }
     
@@ -1612,9 +1591,73 @@ function showToast(msg) {
 function shootLuger() {
   if (State.lampOn) return;
 
+  // Masquer temporairement la gâchette / croix verte pendant le tir pour éviter les clics multiples
+  const laserContainer = document.getElementById('luger-laser-container');
+  if (laserContainer) {
+    laserContainer.style.display = 'none';
+  }
+
   // 1. Jouer le son de tir avec un tout petit retard (25ms) pour s'aligner sur l'affichage
+  // Et définir le comportement une fois que le son de coup de feu a FINI de jouer entièrement
   setTimeout(() => {
-    AudioManager.playGunshot();
+    AudioManager.playGunshot(() => {
+      // Une fois le coup de feu entièrement joué (le son s'est éteint) :
+      // On déclenche l'impact physique (vitre brisée, cadre brisé)
+      if (!State.photoShot) {
+        State.photoShot = true;
+        AudioManager.playGlassBreaking();
+
+        const photo = document.getElementById('obj-photo');
+        const photoTop = document.getElementById('obj-photo-top');
+        const photoBottom = document.getElementById('obj-photo-bottom');
+        const paper = document.getElementById('photo-paper');
+
+        if (photo && photoTop && photoBottom) {
+          // Masquer le cadre photo intact
+          photo.style.display = 'none';
+
+          // Configurer les deux morceaux brisés à leur position de départ parfaitement alignée avec le cadre d'origine
+          photoTop.style.transform = 'rotate(-4deg)';
+          photoBottom.style.transform = 'rotate(-4deg)';
+          photoTop.style.opacity = '1';
+          photoBottom.style.opacity = '1';
+
+          // Les afficher
+          photoTop.style.display = 'block';
+          photoBottom.style.display = 'block';
+
+          // Forcer le reflow du navigateur
+          photoTop.offsetHeight;
+          photoBottom.offsetHeight;
+
+          // Utiliser requestAnimationFrame pour s'assurer que la transition CSS se déclenche de manière fluide depuis la position alignée
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              // Les deux morceaux tournent dans le sens antihoraire à -10deg pour l'impact
+              photoTop.style.transform = 'rotate(-10deg)';
+              photoTop.style.filter = 'drop-shadow(-5px -5px 15px rgba(0,0,0,0.85)) brightness(0.95)';
+
+              photoBottom.style.transform = 'rotate(-10deg)';
+              photoBottom.style.filter = 'drop-shadow(5px 10px 18px rgba(0,0,0,0.9)) brightness(0.9)';
+            });
+          });
+
+          // Révéler le papier caché AU MILIEU
+          if (paper) {
+            paper.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.7s ease, filter 0.7s ease';
+            paper.style.zIndex = '34'; // Entre les morceaux brisés du cadre (z-index sandwich)
+            paper.style.opacity = '1';
+            paper.style.transform = 'translate(3.8vw, 5.5vw) rotate(4deg) scale(1.22)';
+            paper.style.filter = 'brightness(0.88) contrast(0.95) sepia(0.25) drop-shadow(3px 6px 12px rgba(0,0,0,0.75))';
+            paper.style.pointerEvents = 'auto';
+          }
+
+          showToast("💥 Le tir percute et BRISE le cadre photo ! Roland Grandou est projeté... Un message secret apparaît au milieu du cadre éclaté.");
+        }
+      } else {
+        showToast("💥 PAN ! Vous tirez un nouveau coup de feu avec le Luger dans l'obscurité !");
+      }
+    });
   }, 25);
 
   // 2. Afficher le muzzle flash préchargé immédiatement
@@ -1623,85 +1666,23 @@ function shootLuger() {
     flash.style.display = 'block';
   }
 
-  // Masquer temporairement la gâchette / croix verte pendant le tir
-  const laserContainer = document.getElementById('luger-laser-container');
-  if (laserContainer) {
-    laserContainer.style.display = 'none';
-  }
-
   // 3. Activer l'état d'explosion lumineuse globale et mettre à jour les ombres immédiatement
   State.gunshotActive = true;
   updateShadows();
 
-  // 4. Masquer le flash et restaurer les ombres après 150ms
+  // 4. Masquer le flash (la flamme) et restaurer les ombres après 150ms
   setTimeout(() => {
     if (flash) {
       flash.style.display = 'none';
     }
     State.gunshotActive = false;
     updateShadows();
+
     // Réafficher la gâchette immédiatement après le tir si la bougie est toujours éteinte
     if (!State.lampOn && laserContainer) {
       laserContainer.style.display = 'block';
     }
   }, 150);
-
-  // Vérifier si le cadre n'a pas déjà été tiré
-  if (!State.photoShot) {
-    State.photoShot = true;
-
-    const photo = document.getElementById('obj-photo');
-    const photoTop = document.getElementById('obj-photo-top');
-    const photoBottom = document.getElementById('obj-photo-bottom');
-    const paper = document.getElementById('photo-paper');
-
-    if (photo && photoTop && photoBottom) {
-      // Masquer le cadre photo intact
-      photo.style.display = 'none';
-
-      // Configurer les deux morceaux brisés à leur position de départ parfaitement alignée avec le cadre d'origine
-      photoTop.style.transform = 'rotate(-4deg)';
-      photoBottom.style.transform = 'rotate(-4deg)';
-      photoTop.style.opacity = '1';
-      photoBottom.style.opacity = '1';
-
-      // Les afficher
-      photoTop.style.display = 'block';
-      photoBottom.style.display = 'block';
-
-      // Forcer le reflow du navigateur
-      photoTop.offsetHeight;
-      photoBottom.offsetHeight;
-
-      // Utiliser requestAnimationFrame pour s'assurer que la transition CSS se déclenche de manière fluide depuis la position alignée
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // Les deux morceaux restent parfaitement superposés l'un sur l'autre
-          // et tournent dans le sens antihoraire à -10deg (décalage instantané et soudain pour l'impact)
-          photoTop.style.transform = 'rotate(-10deg)';
-          photoTop.style.filter = 'drop-shadow(-5px -5px 15px rgba(0,0,0,0.85)) brightness(0.95)';
-
-          photoBottom.style.transform = 'rotate(-10deg)';
-          photoBottom.style.filter = 'drop-shadow(5px 10px 18px rgba(0,0,0,0.9)) brightness(0.9)';
-        });
-      });
-
-      // Révéler le papier caché AU MILIEU
-      // Le papier est centré dans le cadre, plus bas, plus grand, et avec une rotation asymétrique pour faire naturel
-      if (paper) {
-        paper.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.7s ease, filter 0.7s ease';
-        paper.style.zIndex = '34'; // Entre les morceaux brisés du cadre (z-index sandwich)
-        paper.style.opacity = '1';
-        paper.style.transform = 'translate(3.8vw, 5.5vw) rotate(4deg) scale(1.22)';
-        paper.style.filter = 'brightness(0.88) contrast(0.95) sepia(0.25) drop-shadow(3px 6px 12px rgba(0,0,0,0.75))';
-        paper.style.pointerEvents = 'auto';
-      }
-
-      showToast("💥 Le tir percute et BRISE le cadre photo ! Roland Grandou est projeté... Un message secret apparaît au milieu du cadre éclaté.");
-    }
-  } else {
-    showToast("💥 PAN ! Vous tirez un nouveau coup de feu avec le Luger dans l'obscurité !");
-  }
 }
 
 /* ──────────────────────────────────────
@@ -1722,7 +1703,7 @@ function renderActiveGrid() {
   // 1. Headers Row: 1 8 2 3 4 5 6 7 9 0
   GRID_KEY.forEach(h => {
     const cell = document.createElement('div');
-    cell.className = 'cipher-cell key-row';
+    cell.className = 'cg-h';
     cell.textContent = h;
     container.appendChild(cell);
   });
@@ -1731,9 +1712,9 @@ function renderActiveGrid() {
   const row1 = ['A', '', '', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
   row1.forEach(ch => {
     const cell = document.createElement('div');
-    cell.className = 'cipher-cell';
+    cell.className = 'cg-c';
     cell.textContent = ch;
-    if (ch === '') cell.style.background = 'rgba(0,0,0,0.15)';
+    if (ch === '') cell.style.background = 'rgba(0,0,0,0.08)'; // Fond grisé léger pour indiquer les colonnes de décalage
     container.appendChild(cell);
   });
 
@@ -1741,7 +1722,7 @@ function renderActiveGrid() {
   const row8 = ['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R'];
   row8.forEach(ch => {
     const cell = document.createElement('div');
-    cell.className = 'cipher-cell';
+    cell.className = 'cg-c';
     cell.textContent = ch;
     container.appendChild(cell);
   });
@@ -1750,7 +1731,7 @@ function renderActiveGrid() {
   const row2 = ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '.', '/'];
   row2.forEach(ch => {
     const cell = document.createElement('div');
-    cell.className = 'cipher-cell';
+    cell.className = 'cg-c';
     cell.textContent = ch;
     container.appendChild(cell);
   });
@@ -1843,10 +1824,15 @@ function mkFinalizeWord() {
   const isCubjac = codes.length === CUBJAC_MORSE.length &&
                    codes.every((c, i) => c === CUBJAC_MORSE[i]);
   if (isCubjac || word === 'CUBJAC') {
+    if (!State.typewriterDecrypted) {
+      updateRadioStatus("📡 Signal bloqué — Déchiffrez d'abord l'ordre de mission sur la Remington.", true);
+      setTimeout(() => updateRadioStatus(''), 4000);
+      return;
+    }
     State.victoryDone = true;
-    AudioManager.victory(); // Jouer la musique de victoire F.F.I.
+    State.completionTime = Date.now(); // Heure précise au millième de seconde de la fin de saisie de CUBJAC
     updateRadioStatus('🎯 TRANSMISSION CUBJAC CONFIRMÉE !', true);
-    setTimeout(() => showVictoryScreen(), 1200);
+    setTimeout(() => showVictoryScreen(), 300);
   } else {
     updateRadioStatus(`📡 Reçu : "${word}" — Recommencez…`, true);
     setTimeout(() => updateRadioStatus(''), 3000);
@@ -1978,11 +1964,51 @@ function registerVictory() {
     return;
   }
   
-  // Sauvegarde ou logique de fin
-  alert(`Mission validée pour ${prenom} ${nom} ! La Résistance vous remercie.`);
-  
-  // Optionnel : recharger la page ou fermer la carte
-  // location.reload();
+  // Désactiver le bouton pour éviter les clics multiples
+  const btn = document.querySelector('#victory-postcard button');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "TRANSMISSION EN COURS...";
+    btn.style.opacity = '0.7';
+  }
+
+  fetch('save_result.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      firstname: prenom,
+      lastname: nom,
+      completion_time: State.completionTime || Date.now()
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(data.message);
+      // Redirection vers le registre F.F.I. (admin.php) après 1 seconde
+      setTimeout(() => {
+        window.location.href = 'admin.php';
+      }, 1000);
+    } else {
+      alert("Erreur de transmission : " + data.error);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "VALIDER LE RÉSULTAT";
+        btn.style.opacity = '1';
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    alert("Échec de la liaison radio. Impossible de joindre le P.C. de transmission.");
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "VALIDER LE RÉSULTAT";
+      btn.style.opacity = '1';
+    }
+  });
 }
 
 function flipCard(e) {
@@ -2033,6 +2059,7 @@ const OBJECT_HEIGHTS = {
   'obj-photo': 2,
   'obj-carte': 0.5,
   'obj-journal': 0.8,
+  'obj-rapport-ffi': 0.6,
 };
 
 let shadowAnimationId = null;
@@ -2195,11 +2222,6 @@ function checkMapSuccess() {
   // Si le rapporteur est placé sur Montignac (< 800m) et l'azimut vaut précisément 320°
   if (dist < 800 && Math.abs(rapporteurAngle - 320) === 0) {
     if (!State.typewriterDecrypted) {
-      const now = Date.now();
-      if (now - lastMapBlockedToastTime > 5000) {
-        showToast("❌ Vous n'avez pas encore décodé l'ordre de mission d'origine sur la Remington. Vous ne connaissez ni le point de départ ni l'azimut !");
-        lastMapBlockedToastTime = now;
-      }
       return;
     }
     triggerMapSuccessAnimation();
@@ -2244,14 +2266,17 @@ function triggerMapSuccessAnimation() {
     if (progress >= steps) {
       clearInterval(interval);
       highlightCubjacMarker();
+      
+      // Ouvrir le rapport papier de localisation F.F.I. après que le tracé vert soit terminé et mis en valeur
+      setTimeout(() => {
+        const rapportFfi = document.getElementById('obj-rapport-ffi');
+        if (rapportFfi) {
+          rapportFfi.style.display = 'block';
+        }
+        openModal('modal-map-success-paper');
+      }, 1000);
     }
   }, 25);
-
-  // Afficher le bandeau de victoire sur la carte
-  const banner = document.getElementById('map-success-banner');
-  if (banner) {
-    banner.style.display = 'block';
-  }
 }
 
 function highlightCubjacMarker() {
