@@ -50,20 +50,6 @@ Date : 4 août 1944
   <div id="spotlight"></div>
   <div id="candle-glow"></div>
 
-  <!-- Révélations UV (mode lampe éteinte) -->
-  <div class="uv-reveal" style="top:58%;left:12%;font-size:1.2rem;transform:rotate(-3deg)">
-    BBC · 58.7 MHz
-  </div>
-  <div class="uv-reveal" style="top:12%;left:55%;font-size:0.9rem">
-    ↑ La Forge d'Ans
-  </div>
-  <div class="uv-reveal" style="top:50%;left:46%;font-size:0.85rem;transform:rotate(2deg)">
-    T.M. — Cubjac, 3 août ✦
-  </div>
-  <div class="uv-reveal" style="top:65%;left:80%;font-size:1.1rem">
-    ↗ Azimut 245°
-  </div>
-
   <!-- Canvas pour les ombres volumétriques simulées -->
   <canvas id="shadow-canvas" style="position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;"></canvas>
 
@@ -85,11 +71,11 @@ Date : 4 août 1944
        style="display:none; z-index:13;">
 
   <!-- Étiquette — apparaît SOUS le cigare après roulement vers la droite -->
-  <div id="cigar-label" onclick="zoomPaper('cigar')" style="position: absolute; top: 66%; left: 22%; width: 12vw; opacity: 0; pointer-events: none; transition: transform 0.8s ease, opacity 0.8s ease; transform: scale(0.5) rotate(15deg); z-index: 14; background: url('paper.png') center/cover no-repeat; box-shadow: 2px 4px 8px rgba(0,0,0,0.5); padding: 1rem; font-family: 'Special Elite', cursive; color: #000; font-size: 0.6rem; line-height: 1.2; border-radius: 1px; text-align: center; cursor: pointer;">
-    <div style="font-weight: bold; font-size: 0.7rem; border-bottom: 1px solid #000; padding-bottom: 0.2rem; margin-bottom: 0.3rem; text-transform: uppercase;">Réseau AS</div>
-    <div style="font-weight: bold; font-size: 0.8rem;">BBC · 58.7 MHz</div>
-    <div style="margin-bottom: 0.2rem; font-size: 0.6rem;">Écoute : 21h45</div>
-    <div style="border-top: 1px dashed #000; padding-top: 0.2rem; margin-top: 0.2rem; font-style: italic; font-weight: bold; font-size: 0.6rem;">"Les sanglots longs..."</div>
+  <div id="cigar-label" style="position: absolute; top: 66.3%; left: 22.1%; width: 12vw; height: 12vw; pointer-events: none; z-index: 14; transform: rotate(-12deg) translateY(-8vw); transform-origin: 50% 50%;">
+    <div class="cigar-tag-inner" onclick="zoomPaper('cigar')" style="position: absolute; top: 4.0vw; left: 8.2vw; width: 9.0vw; height: 2.0vw; background: #163e20 url('paper.png') center/cover; background-blend-mode: multiply; box-shadow: 1px 2px 6px rgba(0,0,0,0.55); border: 2px double #d4af37; border-radius: 1px; font-family: 'Cinzel', serif; color: #ffffff; padding: 0.1vw 0.3vw; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; pointer-events: auto; clip-path: inset(0 100% 0 0); transition: clip-path 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.3s;">
+      <div style="font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.58vw; letter-spacing: 0.16em; line-height: 1.1; text-transform: uppercase; color: #ffffff; text-shadow: 0px 1px 2px rgba(0,0,0,0.5);">RADIO LONDRES</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-style: italic; font-size: 0.68vw; letter-spacing: 0.05em; line-height: 1.1; margin-top: 0.05vw; color: #f5e9c8; text-shadow: 0px 1px 2px rgba(0,0,0,0.5);">58.7 MHz</div>
+    </div>
   </div>
 
   <!-- 3. Carte IGN — mini-carte Leaflet statique (non déplaçable) -->
@@ -97,16 +83,22 @@ Date : 4 août 1944
 
 
   <!-- 5. Luger P08 -->
-  <img id="obj-luger" class="obj" src="img/luger.png" alt="Luger P08"
-       draggable="false" onclick="slideLuger()" title="Un Luger posé sur quelque chose…">
-
-  <!-- 5b. Laser et Gâchette du Luger en mode lampe éteinte -->
-  <div id="luger-laser-container" style="position: absolute; top: 36.98%; left: 71.22%; width: 16vw; height: 10.5vw; pointer-events: none; z-index: 95; display: none;">
-    <!-- Ligne laser qui part du canon du flingue (le canon est à gauche de l'image, vers top: 32%, left: 0%) -->
-    <div id="luger-laser-line" style="position: absolute; top: 32%; right: 100%; width: 80vw; height: 3px; background: #ff3b30; box-shadow: 0 0 12px #ff3b30, 0 0 4px #ff3b30; animation: laser-flicker 0.15s infinite alternate; opacity: 0.85;"></div>
+  <div id="luger-wrapper" class="obj" onclick="slideLuger()" title="Un Luger posé sur quelque chose…">
+    <img id="obj-luger" src="img/luger.png" alt="Luger P08" draggable="false" style="width:100%; height:100%; display:block;">
     
-    <!-- Cercle lumineux clignotant autour de la gâchette (environ top: 58%, left: 46%) -->
-    <div id="luger-trigger-circle" onclick="shootLuger()" style="position: absolute; top: 58%; left: 46%; width: 2.5vw; height: 2.5vw; transform: translate(-50%, -50%); border: 2.5px dashed #ff3b30; border-radius: 50%; cursor: pointer; pointer-events: auto; box-shadow: 0 0 10px #ff3b30; animation: trigger-pulse 1.2s infinite; background: rgba(255, 59, 48, 0.05);" title="Presser la gâchette..."></div>
+    <!-- 5b. Gâchette du Luger en mode lampe éteinte -->
+    <div id="luger-laser-container" style="position: absolute; inset:0; pointer-events: none; z-index: 95; display: none;">
+      <!-- Petit indicateur vert en forme de croix à la place du rond de la gâchette (X=46%, Y=46%) -->
+      <div id="luger-trigger-circle" onclick="event.stopPropagation(); shootLuger()" style="position: absolute; top: 46%; left: 46%; width: 1.5vw; height: 1.5vw; transform: translate(-50%, -50%); cursor: pointer; pointer-events: auto; display: flex; align-items: center; justify-content: center; animation: trigger-pulse-green 1.2s infinite;" title="Presser la gâchette...">
+        <div style="position: absolute; width: 2px; height: 100%; background: var(--green-uv, #00FF88); box-shadow: 0 0 6px var(--green-uv, #00FF88);"></div>
+        <div style="position: absolute; width: 100%; height: 2px; background: var(--green-uv, #00FF88); box-shadow: 0 0 6px var(--green-uv, #00FF88);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Effet visuel du coup de feu (muzzle flash) au bout du canon — placé hors du luger-wrapper pour éviter l'isolation de stacking context et permettre le blend-mode screen sur le fond de table -->
+  <div id="muzzle-flash-container" style="display:none; position:absolute; top:36.98%; left:71.22%; width:40.01%; height:26.57vw; transform:rotate(-8deg); transform-origin: 50% 50%; pointer-events:none; z-index:1000; mix-blend-mode:screen;">
+    <img src="img/coup_de_feu.jpg" class="muzzle-flash" alt="Coup de feu" draggable="false" style="mix-blend-mode:screen;">
   </div>
 
   <!-- 6. Boussole — cliquer pour ouvrir le mini-jeu d'azimut -->
@@ -166,8 +158,19 @@ Date : 4 août 1944
   <!-- 12. Photo de Roland Grandou -->
   <img id="obj-photo" class="obj" src="img/photo.png" alt="Photo de Roland Grandou"
        draggable="false" onclick="slidePhoto()" title="Une photo encadrée…">
-  <!-- Papier caché sous la photo de Roland Grandou -->
-  <div id="photo-paper" onclick="zoomPaper('photo')" style="position:absolute; top:35%; left:-4%; opacity:0; filter:brightness(0.2) contrast(0.8) sepia(0.65) hue-rotate(-12deg) drop-shadow(1px 2px 4px rgba(0,0,0,0.95)); z-index:9; pointer-events:none; transition:transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease; transform: rotate(0deg); width:14vw; padding:1rem; background:url('paper.png') center/cover no-repeat; box-shadow:2px 4px 8px rgba(0,0,0,0.5); border-radius:1px; font-family:'Special Elite',cursive; color:#000; font-size:0.8rem; line-height:1.2; text-align:left; cursor:pointer;">
+  
+  <!-- Les deux morceaux de cadre brisé, superposés et cachés au départ -->
+  <img id="obj-photo-top" class="obj" src="img/top broken frame.png" alt="Cadre brisé (haut)"
+       draggable="false" onclick="slidePhoto()" title="Le haut du cadre brisé de Roland Grandou"
+       style="display:none; pointer-events:none; transition: transform 0.12s cubic-bezier(0.1, 0.9, 0.2, 1), opacity 0.15s ease;">
+  
+  <img id="obj-photo-bottom" class="obj" src="img/bottom broken frame.png" alt="Cadre brisé (bas)"
+       draggable="false" onclick="slidePhoto()" title="Le bas du cadre brisé de Roland Grandou"
+       style="display:none; pointer-events:none; transition: transform 0.12s cubic-bezier(0.1, 0.9, 0.2, 1), opacity 0.15s ease;">
+
+  
+  <!-- Papier caché sous la photo de Roland Grandou, calé au z-index 13 -->
+  <div id="photo-paper" onclick="zoomPaper('photo')" style="position:absolute; top:49%; left:-3%; opacity:0; filter:brightness(0.2) contrast(0.8) sepia(0.65) hue-rotate(-12deg) drop-shadow(1px 2px 4px rgba(0,0,0,0.95)); z-index:13; pointer-events:none; transition:transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.7s ease, filter 0.7s ease; transform: rotate(-4deg) scale(0.92); width:17vw; padding:1.2rem 1rem; background:url('paper.png') center/cover no-repeat; box-shadow:2px 4px 8px rgba(0,0,0,0.5); border-radius:1px; font-family:'Special Elite',cursive; color:#000; font-size:0.8rem; line-height:1.2; text-align:left; cursor:pointer;">
     <div style="font-weight:bold; font-size:0.8rem; text-align:center; margin-bottom:0.3rem;">R. GRANDOU</div>
     <div style="border-bottom:1px solid #000; margin-bottom:0.4rem;"></div>
     <div style="font-size:0.6rem; line-height:1.3;">

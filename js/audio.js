@@ -499,55 +499,13 @@ const AudioManager = (() => {
     }
   }
 
-  /* ── Bruit de tir synthétique (Luger) ── */
+  const gunshotAudio = new Audio('audio/luger_sound_effect.wav');
+
+  /* ── Bruit de tir (Luger) ── */
   function playGunshot() {
-    const c = getCtx();
-    
-    // 1. Noeud de bruit blanc pour le souffle de l'explosion
-    const bufferSize = c.sampleRate * 0.5; // 0.5s de son
-    const noiseBuffer = c.createBuffer(1, bufferSize, c.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-    
-    const whiteNoise = c.createBufferSource();
-    whiteNoise.buffer = noiseBuffer;
-    
-    // 2. Filtre passe-bas pour colorer le bruit
-    const filter = c.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(1000, c.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(10, c.currentTime + 0.3);
-    
-    // 3. Enveloppe de gain pour le tir
-    const gainNode = c.createGain();
-    gainNode.gain.setValueAtTime(1.0, c.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, c.currentTime + 0.35);
-    
-    // 4. Oscillateur basse fréquence pour ajouter de la basse / impact corporel (boom)
-    const osc = c.createOscillator();
-    const oscGain = c.createGain();
-    osc.frequency.setValueAtTime(180, c.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(20, c.currentTime + 0.15);
-    
-    oscGain.gain.setValueAtTime(0.8, c.currentTime);
-    oscGain.gain.exponentialRampToValueAtTime(0.01, c.currentTime + 0.2);
-    
-    // Connexions
-    whiteNoise.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(c.destination);
-    
-    osc.connect(oscGain);
-    oscGain.connect(c.destination);
-    
-    // Démarrage
-    whiteNoise.start();
-    whiteNoise.stop(c.currentTime + 0.4);
-    
-    osc.start();
-    osc.stop(c.currentTime + 0.25);
+    gunshotAudio.currentTime = 0;
+    gunshotAudio.volume = 0.8;
+    gunshotAudio.play().catch(e => console.warn('Gunshot audio play blocked:', e));
   }
 
   return { dot, dash, startTone, stopTone, typewriterKey, startIntroTypewriter, stopIntroTypewriter, startStatic, stopStatic, paperRustle, victory, clink, stamp, lightCandle, blowOutCandle, startRadioLondresVoice, makeRadioLondresVoiceSingle, stopRadioLondresVoice, setStaticVolume, setVoiceVolume, updateStationVolumes, beep, playChantDesPartisans, stopChantDesPartisans, playGunshot };

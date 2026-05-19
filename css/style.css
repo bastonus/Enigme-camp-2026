@@ -2,7 +2,7 @@
    OPÉRATION CUBJAC 2026 — CSS Principal
    ═══════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Caveat:wght@400;700&family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Caveat:wght@400;700&family=VT323&family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
 
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -357,10 +357,18 @@ html, body {
 /* Zoomé : espacement de grille seulement */
 #carnet-wrapper.zoomed .carnet-grid    { gap: 0.8cqw; }
 
-#obj-luger {
-  width: 40.01%; top: 36.98%; left: 71.22%;
+#luger-wrapper {
+  width: 40.01%;
+  height: 26.57vw;
+  top: 36.98%;
+  left: 71.22%;
   --rot: -8deg;
-  z-index: 13;
+  z-index: 15;
+}
+#obj-luger {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 #obj-boussole {
@@ -401,10 +409,21 @@ html, body {
   z-index: 30;
 }
 
-#obj-photo {
+#obj-photo, #obj-photo-top, #obj-photo-bottom {
   width: 26.6%; top: 46.68%; left: -7.32%;
   --rot: -4deg;
-  z-index: 13;
+}
+
+#obj-photo {
+  z-index: 36; /* Devant les morceaux brisés au départ */
+}
+
+#obj-photo-top {
+  z-index: 35; /* Partie supérieure au-dessus de la partie inférieure */
+}
+
+#obj-photo-bottom {
+  z-index: 33; /* Partie inférieure */
 }
 
 /* ══════════════════════════════════════════
@@ -464,6 +483,20 @@ html, body {
 }
 #obj-radio.illuminated #radio-ambient-glow {
   opacity: 1;
+}
+
+#radio-glow {
+  position: absolute;
+  top: -22.13%; left: 66.08%;
+  width: 70vw; height: 70vw;
+  transform: translate(-30%, -30%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 40, 40, 0.25) 0%, rgba(200, 20, 20, 0.08) 40%, transparent 70%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 25; /* Devant les objets pour colorer la scène */
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
 /* ── Sous-titres / Statut radio à l'écran ── */
@@ -565,7 +598,7 @@ html, body {
 
 .notebook-page {
   flex: 1;
-  padding: 25px 30px;
+  padding: 40px 45px;
   box-sizing: border-box;
   min-height: 480px;
   background-image: linear-gradient(rgba(138,96,48,0.08) 1px, transparent 1px);
@@ -1176,7 +1209,55 @@ html, body {
   100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.8; box-shadow: 0 0 8px #ff3b30; }
 }
 
+@keyframes trigger-pulse-green {
+  0% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.7; }
+  50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.7; }
+}
+
 @keyframes cigar-burn-glow {
   0% { transform: scale(0.95); opacity: 0.75; box-shadow: 0 0 8px #ff4500, 0 0 15px #ff0000; }
   100% { transform: scale(1.05); opacity: 1; box-shadow: 0 0 15px #ff4500, 0 0 30px #ff0000; }
+}
+
+/* Effet de coup de feu (muzzle flash) au bout du canon */
+.muzzle-flash {
+  position: absolute;
+  top: 25.35%;
+  right: 92.12%;
+  width: 38vw;
+  height: auto;
+  transform: translateY(-50%);
+  z-index: 1000;
+  pointer-events: none;
+  mix-blend-mode: screen; /* Le fond noir devient invisible, le feu se superpose parfaitement */
+  filter: contrast(1.5) brightness(1.2); /* Nettoie le fond noir des artefacts de compression JPEG */
+}
+
+/* Reset Leaflet divIcon styles pour le rapporteur */
+.custom-rapporteur-icon {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Animation du tracé vert de succès */
+.success-route-line {
+  stroke-dasharray: 8, 8;
+  animation: dashAnimation 1.5s linear infinite;
+}
+@keyframes dashAnimation {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+/* Animation d'étiquette pulsante pour Cubjac */
+@keyframes pulseMarker {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); filter: brightness(1.2); }
+  100% { transform: scale(1); }
+}
+.pulse-highlight {
+  animation: pulseMarker 1.2s infinite ease-in-out;
 }

@@ -10,6 +10,7 @@
 const State = {
   startTime: null,
   lampOn: true,
+  gunshotActive: false,
   radioOn: false,
   radioTuned: false,
   radioActivatedOnce: false,
@@ -24,6 +25,9 @@ const State = {
   hintCount: 0,
   typedAnswer: '',
   radioFrequency: 40.0,
+  cigarShot: false,
+  photoShot: false,
+  typewriterDecrypted: false,
 };
 
 // Map & Protractor global references
@@ -48,7 +52,7 @@ const HINTS = [
   "Le message Morse te donne un nombre. Cherche ce nombre sur la carte IGN.",
   "L'altitude trouvée (182) est la clé de la grille du carnet.",
   "Glisse le Luger — il repose sur un message chiffré. Utilise la grille pour le décoder.",
-  "Retourne la boussole : l'azimut 245° depuis Tourtoirac pointe sur le village cible.",
+  "Retourne la boussole : l'azimut 320° depuis Montignac pointe sur le village cible.",
   "Tape CUBJAC sur la machine à écrire pour valider.",
 ];
 
@@ -265,6 +269,7 @@ function openCigareBox() {
   AudioManager.paperRustle();
 
   const cigar = document.getElementById('obj-cigare');
+  const flame = document.getElementById('cigar-flame');
   const box   = document.getElementById('obj-cigare-box');
 
   if (box) box.style.filter = 'drop-shadow(4px 8px 12px rgba(0,0,0,0.7)) brightness(1.15)';
@@ -281,60 +286,105 @@ function openCigareBox() {
     cigar.style.opacity    = '0';
     // Part caché plus bas dans l'axe -12deg
     cigar.style.transform  = 'rotate(-12deg) translateY(2vw)';
-    cigar.offsetHeight; // force reflow
+    
+    if (flame) {
+      flame.style.display    = 'block';
+      flame.style.zIndex     = '12';
+      flame.style.transition = 'none';
+      flame.style.opacity    = '0';
+      flame.style.transform  = cigar.style.transform;
+    }
+    
+    // Utiliser requestAnimationFrame double pour s'assurer que le navigateur a pris en compte display: block
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        cigar.style.transition = 'transform 0.9s cubic-bezier(0.25,0.8,0.25,1), opacity 0.6s ease';
+        cigar.style.opacity    = '1';
+        cigar.style.transform  = 'rotate(-12deg) translateY(-8vw)';
+        
+        if (flame) {
+          flame.style.transition = 'transform 0.9s cubic-bezier(0.25,0.8,0.25,1), opacity 0.6s ease';
+          flame.style.opacity    = '1';
+          flame.style.transform  = cigar.style.transform;
+        }
+      });
+    });
 
-    // Glisse vers le haut (le long de l'axe de la boîte)
-    cigar.style.transition = 'transform 0.9s cubic-bezier(0.25,0.8,0.25,1), opacity 0.6s ease';
-    cigar.style.opacity    = '1';
-    cigar.style.transform  = 'rotate(-12deg) translateY(-8vw)';
-
-    setTimeout(() => { cigar.style.zIndex = '35'; }, 900);
+    setTimeout(() => { 
+      cigar.style.zIndex = '35'; 
+      if (flame) flame.style.zIndex = '34';
+    }, 900);
   }
 }
 
+let cigarAnimationId = null;
 function toggleCigarRoll() {
   const cigar = document.getElementById('obj-cigare');
   const label = document.getElementById('cigar-label');
-  if (!cigarSlid) {
-    cigarSlid = true;
-    AudioManager.paperRustle();
+  const tagInner = label ? label.querySelector('.cigar-tag-inner') : null;
+  if (!cigar) return;
 
-    // Glisse vers la droite en restant droit pour dévoiler l'étiquette
-    cigar.style.transition = 'transform 1.2s cubic-bezier(0.25,0.8,0.25,1)';
-    cigar.style.transform  = 'rotate(-12deg) translateY(-8vw) translateX(12vw)';
+  const duration = 1000; // 1 seconde pour une animation réactive et parfaitement fluide
+  const start = performance.now();
+  
+  if (cigarAnimationId) {
+    cancelAnimationFrame(cigarAnimationId);
+    cigarAnimationId = null;
+  }
 
-    if (label) {
-      setTimeout(() => {
-        label.style.transition   = 'transform 0.8s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.8s ease';
-        label.style.zIndex       = '34';
-        label.style.opacity      = '1';
-        label.style.transform    = 'scale(1) translate(10vw, -10vw) rotate(-8deg)';
-        label.style.filter       = 'brightness(0.84) contrast(0.92) sepia(0.35) drop-shadow(5px 10px 18px rgba(0,0,0,0.85))';
-        label.style.pointerEvents = 'auto';
-      }, 600);
+  // Désactiver les transitions CSS pour éviter les conflits avec le calcul incrémental JS
+  cigar.style.transition = 'none';
+  if (tagInner) tagInner.style.transition = 'none';
+
+  cigarSlid = !cigarSlid;
+  AudioManager.paperRustle();
+
+  const fromX = cigarSlid ? 0 : 12;
+  const toX = cigarSlid ? 12 : 0;
+
+  if (cigarSlid && label) {
+    label.style.zIndex = '33';
+  }
+
+  function step(now) {
+    const elapsed = now - start;
+    let progress = Math.min(1, elapsed / duration);
+    
+    // Easing cubic ease-out pour un mouvement naturel
+    const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+    // Position incrémentale du cigare (en vw)
+    const currentX = fromX + (toX - fromX) * easedProgress;
+    cigar.style.transform = `rotate(-12deg) translateY(-8vw) translateX(${currentX}vw)`;
+
+    // Taille et clip-path de l'étiquette calculés de manière incrémentale en synchronisation absolue avec la position du cigare
+    if (tagInner) {
+      let clipPercent = 100;
+      // Le cigare a une course de 12vw. La bande du cigare s'aligne sur le bord gauche de l'étiquette (8.2vw)
+      // lorsque currentX = 3vw, et sur le bord droit de l'étiquette (17.2vw) lorsque currentX = 12vw.
+      // Le clip-path (inset de droite) suit donc précisément la formule physique de la bande.
+      if (currentX >= 3) {
+        clipPercent = ((12 - currentX) / 9) * 100;
+      } else {
+        clipPercent = 100;
+      }
+      tagInner.style.clipPath = `inset(0 ${clipPercent}% 0 0)`;
     }
-  } else {
-    cigarSlid = false;
-    AudioManager.paperRustle();
 
-    // Revient à sa position juste au-dessus de la boîte
-    cigar.style.transition = 'transform 1.2s cubic-bezier(0.25,0.8,0.25,1)';
-    cigar.style.transform  = 'rotate(-12deg) translateY(-8vw) translateX(0)';
-
-    if (label) {
-      label.style.transition    = 'transform 0.5s ease, opacity 0.5s ease';
-      label.style.opacity       = '0';
-      label.style.transform     = 'scale(0.5) rotate(15deg)';
-      label.style.pointerEvents = 'none';
-      setTimeout(() => { if (!cigarSlid) label.style.zIndex = '14'; }, 500);
+    if (progress < 1) {
+      cigarAnimationId = requestAnimationFrame(step);
+    } else {
+      cigarAnimationId = null;
+      if (!cigarSlid && label) {
+        label.style.zIndex = '9';
+      }
     }
   }
 
-  if (typeof updateShadows === 'function') {
-    setTimeout(updateShadows, 50);
-    setTimeout(updateShadows, 600);
-    setTimeout(updateShadows, 1200);
-  }
+  cigarAnimationId = requestAnimationFrame(step);
+
+  // Note : nous ne déclenchons pas updateShadows() ici car nous avons désactivé 
+  // les ombres portées dynamiques sur le cigare et l'étiquette pour des performances optimales.
 }
 
 /* ──────────────────────────────────────
@@ -370,19 +420,27 @@ function updateRadioStatus(htmlText, forceShow = false) {
 function setRadioIlluminated(on) {
   const radioEl = document.getElementById('obj-radio');
   const radioImg = radioEl ? radioEl.querySelector('img') : null;
+  const radioGlow = document.getElementById('radio-glow');
   if (radioEl) {
     if (on) {
       radioEl.classList.add('illuminated');
       if (radioImg && !radioImg.src.endsWith('illuminated.png')) {
         radioImg.src = 'img/poste_radio illuminated.png';
       }
+      if (radioGlow) {
+        radioGlow.style.opacity = '1';
+      }
     } else {
       radioEl.classList.remove('illuminated');
       if (radioImg && !radioImg.src.endsWith('off.png')) {
         radioImg.src = 'img/poste_radio off.png';
       }
+      if (radioGlow) {
+        radioGlow.style.opacity = '0';
+      }
     }
   }
+  updateShadows();
 }
 
 function toggleRadioPower(e) {
@@ -574,7 +632,7 @@ function updateRadioTuningUI(freq) {
 }
 
 /* Séquence Morse audio (synthétisée) */
-const MORSE_MESSAGE = 'ALTITUDE FORGE CENT QUATRE VINGT DEUX';
+const MORSE_MESSAGE = 'MONTIGNAC';
 
 function updateMorseSignalProperties() {
   if (!morseAudioCtx || !morseMasterGain || !morseMasterFilter) return;
@@ -705,6 +763,7 @@ const IGN_ORTHO_URL = 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&V
 
 let miniMap = null;
 let fullMap = null;
+let rapporteurMarker = null;
 let currentLayer = 'topo';
 let topoLayer = null, orthoLayer = null;
 let topoLayerFull = null, orthoLayerFull = null;
@@ -735,12 +794,12 @@ function initMap() {
     touchZoom: false,
     attributionControl: false,
     boxZoom: false,
-  }).setView(TOURTOIRAC, 13);
+  }).setView([45.0658, 1.1650], 13);
 
   L.tileLayer(IGN_TOPO_URL, { maxZoom: 15, attribution: '' }).addTo(miniMap);
 
-  // Marker Tourtoirac (petit point)
-  L.circleMarker(TOURTOIRAC, {
+  // Marker Montignac (petit point)
+  L.circleMarker([45.0658, 1.1650], {
     radius: 4, color: '#e74c3c', fillColor: '#e74c3c',
     fillOpacity: 0.9, weight: 1.5
   }).addTo(miniMap);
@@ -751,6 +810,9 @@ function openMapModal() {
   if (!modal) return;
   modal.style.display = 'block';
   AudioManager.paperRustle();
+
+  // Activer le listener clavier du rapporteur à chaque ouverture
+  initRapporteurKeyboard();
 
   // Initialise la carte plein écran une seule fois
   if (!window._fullMapInit) {
@@ -792,7 +854,7 @@ function openMapModal() {
       // Épingles et étiquettes papier pour chaque ville
       MAP_CITIES.forEach(city => {
         const iconHtml = `
-          <div style="position:relative; width:0; height:0;">
+          <div id="city-marker-${city.name.toLowerCase()}" style="position:relative; width:0; height:0;">
             <div class="city-label-paper" style="transform: translateX(-50%) rotate(${city.rot}deg);">
               ${city.name}
             </div>
@@ -808,28 +870,77 @@ function openMapModal() {
         L.marker(city.coords, { icon: cityIcon }).addTo(fullMap);
       });
 
+      // Rapporteur solidaire de la carte à Montignac (pointer-events: auto et curseur grab pour le déplacement)
+      const MONTIGNAC_COORDS = [45.0658, 1.1650];
+      const rapporteurHtml = `
+        <div id="rapporteur" style="width:280px; height:280px; position:relative; pointer-events:auto; user-select:none; cursor:grab;">
+          <svg id="rapporteur-svg" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" width="280" height="280" style="pointer-events:none; overflow:visible;">
+            <!-- Fond blanc semi-transparent sur la moitié supérieure uniquement -->
+            <path d="M10,140 A130,130 0 0,1 270,140 Z" fill="rgba(255,255,255,0.75)" stroke="none"/>
+            <!-- Cercle de bordure continu pour tout le rapporteur -->
+            <circle cx="140" cy="140" r="130" fill="transparent" stroke="#111" stroke-width="2"/>
+            <circle cx="140" cy="140" r="4" fill="#111"/>
+            <!-- Ligne d'azimut (bras mobile) -->
+            <line id="rapporteur-arm" x1="140" y1="140" x2="140" y2="10" stroke="#e74c3c" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrowhead)"/>
+            <defs>
+              <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="4" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill="#e74c3c"/>
+              </marker>
+            </defs>
+            <!-- Point central -->
+            <circle id="rapporteur-center" cx="140" cy="140" r="5" fill="#e74c3c" opacity="0.9"/>
+            <circle cx="140" cy="140" r="2" fill="#fff"/>
+          </svg>
+          <!-- Instructions intégrées au rapporteur -->
+          <div style="position:absolute; top:70px; left:50%; transform:translateX(-50%); width:200px; text-align:center; pointer-events:none;">
+            <div style="font-family:'Special Elite',cursive; font-size:12px; color:#111; font-weight:bold; line-height:1.3; opacity:0.85; margin-bottom: 6px;">
+              Prenez l'azimut du point de chute avec les flèches du clavier ◀ ▶
+            </div>
+            <div style="display:inline-block; background:rgba(255,255,255,0.9); border:1px solid #111; padding:2px 10px; border-radius:4px;">
+              <span style="font-family:'Special Elite',cursive; color:#111; font-size:0.75rem; font-weight:bold;">AZIMUT : </span>
+              <span id="rap-angle-display" style="font-family:'VT323',monospace; font-size:1.4rem; color:#e74c3c; font-weight:bold;">0°</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const rapporteurIcon = L.divIcon({
+        className: 'custom-rapporteur-icon',
+        html: rapporteurHtml,
+        iconSize: [280, 280],
+        iconAnchor: [140, 140]
+      });
+
+      // Position de départ du rapporteur (en haut à gauche de toutes les villes)
+      const RAPPORTEUR_START_COORDS = [45.35, 0.70];
+
+      rapporteurMarker = L.marker(RAPPORTEUR_START_COORDS, {
+        draggable: true,
+        icon: rapporteurIcon,
+        zIndexOffset: 1000
+      }).addTo(fullMap);
+
+      rapporteurMarker.on('dragstart', () => {
+        const rapEl = document.getElementById('rapporteur');
+        if (rapEl) rapEl.style.cursor = 'grabbing';
+      });
+
+      rapporteurMarker.on('dragend', () => {
+        const rapEl = document.getElementById('rapporteur');
+        if (rapEl) rapEl.style.cursor = 'grab';
+        checkMapSuccess();
+      });
+
       // Ajuster la vue pour englober toutes les villes
       const bounds = L.latLngBounds(pathCoords);
       fullMap.fitBounds(bounds, { padding: [60, 60] });
 
-      // Position initiale du rapporteur (centré sur l'écran)
-      setTimeout(() => {
-        positionRapporteurCenter();
-      }, 50);
-      
       initRapporteurTicks();
-      initRapporteurDrag();
       initRapporteurKeyboard();
     }, 100);
   } else {
     setTimeout(() => { 
       fullMap.invalidateSize(); 
-      // Réajuster la vue sur les villes si on rouvre la carte
-      if (typeof MAP_CITIES !== 'undefined') {
-        // Wait, MAP_CITIES is scoped to the if block. Let's not re-fit bounds if they moved the map, they might want to keep their view.
-        // Actually, they want the overview every time they open.
-      }
-      positionRapporteurCenter();
     }, 100);
   }
 }
@@ -863,18 +974,7 @@ function setMapLayer(type) {
 }
 
 function positionRapporteurCenter() {
-  const rap = document.getElementById('rapporteur');
-  const mapDiv = document.getElementById('fullscreen-map');
-  if (!rap || !mapDiv) return;
-  
-  const rect = mapDiv.getBoundingClientRect();
-  const centerX = rect.width / 2;
-  const centerY = rect.height / 2;
-  
-  rap.style.transform = 'none';
-  rap.style.left = (centerX - 140) + 'px';
-  rap.style.top  = (centerY - 140) + 'px';
-  rapPos = { x: centerX - 140, y: centerY - 140 };
+  // Rendu obsolète car le rapporteur est désormais un marqueur Leaflet solidaire de la carte
 }
 
 function initRapporteurTicks() {
@@ -883,9 +983,9 @@ function initRapporteurTicks() {
   const ns = 'http://www.w3.org/2000/svg';
   const cx = 140, cy = 140, R = 130;
 
-  // Ticks tous les 5° sur le demi-cercle supérieur (0-180°)
-  for (let deg = 0; deg <= 180; deg += 5) {
-    const rad = (deg - 90) * Math.PI / 180; // 0 = top
+  // Ticks tous les 5° sur tout le cercle (0-360°)
+  for (let deg = 0; deg < 360; deg += 5) {
+    const rad = (deg - 90) * Math.PI / 180; // 0 = top (N)
     const isMajor = deg % 10 === 0;
     const inner = R - (isMajor ? 14 : 8);
     const x1 = cx + R * Math.cos(rad);
@@ -898,7 +998,11 @@ function initRapporteurTicks() {
     line.setAttribute('y1', y1.toFixed(1));
     line.setAttribute('x2', x2.toFixed(1));
     line.setAttribute('y2', y2.toFixed(1));
-    line.setAttribute('stroke', '#111');
+    
+    // Déterminer la couleur : blanc ou noir selon si on est sur la partie supérieure (fond blanc) ou inférieure (fond transparent)
+    // Moitié haute = de 270° à 90°
+    const isUpper = (deg >= 270 || deg <= 90);
+    line.setAttribute('stroke', isUpper ? '#111' : '#fff');
     line.setAttribute('stroke-width', isMajor ? '1.5' : '0.8');
     line.setAttribute('opacity', '0.8');
     svg.insertBefore(line, svg.querySelector('#rapporteur-arm'));
@@ -913,29 +1017,16 @@ function initRapporteurTicks() {
       text.setAttribute('y', ty.toFixed(1));
       text.setAttribute('text-anchor', 'middle');
       text.setAttribute('dominant-baseline', 'middle');
-      text.setAttribute('fill', '#111');
+      text.setAttribute('fill', isUpper ? '#111' : '#fff');
       text.setAttribute('font-size', '9');
       text.setAttribute('font-family', 'sans-serif');
       text.setAttribute('font-weight', 'bold');
-      // Afficher l'azimut réel (0° = N, 90° = E, etc.)
-      // Sur un rapporteur classique : 0 à gauche, 180 à droite
-      // Ici on affiche l'azimut réel (270+deg pour compenser)
+      
       const azimutLabel = deg;
       text.textContent = azimutLabel;
       svg.insertBefore(text, svg.querySelector('#rapporteur-arm'));
     }
   }
-
-  // Ligne de base horizontale
-  const baseline = document.createElementNS(ns, 'line');
-  baseline.setAttribute('x1', (cx - R).toFixed(1));
-  baseline.setAttribute('y1', cy.toFixed(1));
-  baseline.setAttribute('x2', (cx + R).toFixed(1));
-  baseline.setAttribute('y2', cy.toFixed(1));
-  baseline.setAttribute('stroke', '#f5c842');
-  baseline.setAttribute('stroke-width', '1');
-  baseline.setAttribute('opacity', '0.6');
-  svg.insertBefore(baseline, svg.querySelector('#rapporteur-arm'));
 }
 
 function updateRapporteurArm() {
@@ -943,10 +1034,6 @@ function updateRapporteurArm() {
   const disp = document.getElementById('rap-angle-display');
   if (!arm) return;
 
-  // Azimut 0 = Nord (en haut). La ligne part vers le haut quand angle=0.
-  // En SVG, 0° pointe vers le haut (y diminue), sens horaire.
-  const rad = (rapporteurAngle - 180) * Math.PI / 180; // offset -180 car le bras dépasse vers le haut
-  // En fait: azimut 0 = bras vers le haut = -90° en référentiel SVG (x droite)
   const svgRad = (rapporteurAngle - 90) * Math.PI / 180;
   const R = 128;
   const x2 = 140 + R * Math.cos(svgRad);
@@ -957,31 +1044,7 @@ function updateRapporteurArm() {
 }
 
 function initRapporteurDrag() {
-  const rap = document.getElementById('rapporteur');
-  if (!rap) return;
-
-  rap.addEventListener('pointerdown', (e) => {
-    // Éviter les clics sur les contrôles enfants
-    rapDragging = true;
-    const rect = rap.getBoundingClientRect();
-    rapOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    rap.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  });
-
-  window.addEventListener('pointermove', (e) => {
-    if (!rapDragging) return;
-    const mapEl = document.getElementById('fullscreen-map');
-    const mapRect = mapEl ? mapEl.getBoundingClientRect() : { left: 0, top: 0 };
-    const newX = e.clientX - mapRect.left - rapOffset.x;
-    const newY = e.clientY - mapRect.top  - rapOffset.y;
-    rap.style.left = newX + 'px';
-    rap.style.top  = newY + 'px';
-    rapPos = { x: newX, y: newY };
-    e.preventDefault();
-  });
-
-  window.addEventListener('pointerup', () => { rapDragging = false; });
+  // Rendu obsolète car le rapporteur est désormais solidaire de la carte et centré sur Tourtoirac
 }
 
 function rapporteurKeyHandler(e) {
@@ -990,10 +1053,12 @@ function rapporteurKeyHandler(e) {
   if (e.key === 'ArrowLeft') {
     rapporteurAngle = (rapporteurAngle - 1 + 360) % 360;
     updateRapporteurArm();
+    checkMapSuccess();
     e.preventDefault();
   } else if (e.key === 'ArrowRight') {
     rapporteurAngle = (rapporteurAngle + 1) % 360;
     updateRapporteurArm();
+    checkMapSuccess();
     e.preventDefault();
   } else if (e.key === 'Escape') {
     closeMapModal();
@@ -1001,6 +1066,7 @@ function rapporteurKeyHandler(e) {
 }
 
 function initRapporteurKeyboard() {
+  document.removeEventListener('keydown', rapporteurKeyHandler);
   document.addEventListener('keydown', rapporteurKeyHandler);
   updateRapporteurArm();
 }
@@ -1013,7 +1079,7 @@ function initRapporteurKeyboard() {
 let lugerSlid = false;
 function slideLuger() {
   if (!State.lampOn) {
-    showToast("Le laser rouge indique la ligne de mire. Visez le cigare en pressant le cercle sur la gâchette !");
+    showToast("La croix verte indique la gâchette. Visez le cigare en pressant la croix !");
   } else {
     showToast("Un pistolet Luger P08 d'officier allemand... Le canon est froid.");
   }
@@ -1030,8 +1096,7 @@ function slideLuger() {
       <div class="secret-paper">
         <p style="font-family:'Special Elite',cursive;font-size:.85rem;margin-bottom:1rem;">Ordre de mission — Réseau AS<br>Codé selon échiquier habituel :</p>
         <p style="font-size:1.3rem;letter-spacing:.05em;font-weight:bold;color:#3a1a00;line-height:2;">
-          18-2 · 8-1-2 · 18-2-1-8 · 2-1-8-2-1<br>
-          8-2-1 · 1-8 · 18-2-1 · 8-1
+          8-4 · 8-6 · 8-5 · 2-8 · 8-1 · 9 · 8-5 · 1 · 4
         </p>
         <p style="margin-top:1rem;font-size:.9rem;color:#6a4020;font-style:italic;">
           [Déchiffre avec la grille du carnet]
@@ -1044,35 +1109,11 @@ function slideLuger() {
 /* ──────────────────────────────────────
    BOUSSOLE — RETOURNEMENT (DÉSACTIVÉ)
 ────────────────────────────────────── */
-let photoSlid = false;
 function slidePhoto() {
-  const photo = document.getElementById('obj-photo');
-  const paper = document.getElementById('photo-paper');
-  if (!photoSlid) {
-    photoSlid = true;
-    photo.style.transition = 'transform 0.5s ease';
-    photo.style.transform = 'translate(-30px, -20px) rotate(-12deg)';
-    if (paper) {
-      paper.style.transition = 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease';
-      paper.style.zIndex = '40';
-      paper.style.opacity = '1';
-      paper.style.transform = 'translate(14vw, 4vw) rotate(6deg)';
-      paper.style.filter = 'brightness(0.84) contrast(0.92) sepia(0.35) drop-shadow(5px 10px 18px rgba(0,0,0,0.85))';
-      paper.style.pointerEvents = 'auto';
-    }
-    AudioManager.paperRustle();
+  if (!State.photoShot) {
+    showToast("Le cadre en bois de Roland Grandou est solidement fixé sur la table.");
   } else {
-    photoSlid = false;
-    photo.style.transform = 'rotate(var(--rot))';
-    if (paper) {
-      paper.style.transition = 'transform 0.5s ease, opacity 0.5s ease, filter 0.5s ease';
-      paper.style.opacity = '0';
-      paper.style.transform = 'rotate(0deg)';
-      paper.style.filter = 'brightness(0.2) contrast(0.8) sepia(0.65) hue-rotate(-12deg) drop-shadow(1px 2px 4px rgba(0,0,0,0.95))';
-      paper.style.pointerEvents = 'none';
-      setTimeout(() => { if (!photoSlid) paper.style.zIndex = '9'; }, 500);
-    }
-    AudioManager.paperRustle();
+    zoomPaper('photo');
   }
 }
 
@@ -1096,13 +1137,13 @@ function openCompassModal() {
   
   const wheel = document.getElementById('compass-wheel');
   
-  // Si déjà orientée, on repositionne sur 245° et on montre le succès
+  // Si déjà orientée, on repositionne sur 320° et on montre le succès
   if (State.boussoleOriented) {
-    compassDragState.currentRotation = 245;
-    if (wheel) wheel.style.transform = 'rotate(245deg)';
+    compassDragState.currentRotation = 320;
+    if (wheel) wheel.style.transform = 'rotate(320deg)';
     const readout = document.getElementById('compass-angle-val');
     if (readout) {
-      readout.textContent = '245°';
+      readout.textContent = '320°';
       readout.style.color = '#2ecc71';
       readout.style.textShadow = '0 0 10px rgba(46,204,113,0.5)';
     }
@@ -1188,11 +1229,11 @@ function moveCompassDrag(e) {
     compassDragState.lastBeepRotation = newRotation;
   }
   
-  if (Math.abs(displayAngle - 245) <= 2.5) {
-    const targetRotation = Math.round(newRotation - (displayAngle - 245));
+  if (Math.abs(displayAngle - 320) <= 2.5) {
+    const targetRotation = Math.round(newRotation - (displayAngle - 320));
     if (wheel) wheel.style.transform = `rotate(${targetRotation}deg)`;
     if (readout) {
-      readout.textContent = "245°";
+      readout.textContent = "320°";
       readout.style.color = "#2ecc71";
       readout.style.textShadow = "0 0 10px rgba(46, 204, 113, 0.5)";
     }
@@ -1239,22 +1280,7 @@ function initCompassEvents() {
   window.addEventListener('pointercancel', stopCompassDrag);
 }
 
-let journalOpen = false;
-function slideJournal() {
-  const journal = document.getElementById('obj-journal');
-  const overlay = document.getElementById('journal-overlay');
-  if (!journalOpen) {
-    journalOpen = true;
-    // Le journal s'affiche en plein écran
-    if (overlay) overlay.classList.add('open');
-    AudioManager.paperRustle();
-  } else {
-    journalOpen = false;
-    if (overlay) overlay.classList.remove('open');
-    journal.style.transform = 'rotate(var(--rot))';
-    AudioManager.paperRustle();
-  }
-}
+
 
 let whiskySlid = false;
 function interactWhisky() {
@@ -1272,26 +1298,55 @@ function zoomPaper(paperId) {
     case 'cigar':
       html = `
         <div style="font-weight: bold; font-size: 1.45rem; border-bottom: 2px solid #000; padding-bottom: 0.4rem; margin-bottom: 0.8rem; text-transform: uppercase;">
-          Réseau AS — Message
+          Réseau AS — Message Secret
         </div>
-        <div style="font-weight: bold; font-size: 1.35rem; margin-bottom: 0.4rem;">BBC · 58.7 MHz</div>
-        <div style="font-size: 1.15rem; margin-bottom: 0.4rem;">Écoute : 21h45</div>
-        <div style="border-top: 2px dashed #000; padding-top: 0.4rem; margin-top: 0.8rem; font-style: italic; font-weight: bold; font-size: 1.25rem;">
-          "Les sanglots longs..."
+        <div style="font-weight: bold; font-size: 1.35rem; margin-bottom: 0.4rem; color: #8c1c1c; text-align: center;">BBC · 58.7 MHz</div>
+        <div style="font-size: 1.15rem; margin-bottom: 0.4rem; text-align: center;">Écoute : 21h45</div>
+        <div style="border-top: 2px dashed #000; padding-top: 0.6rem; margin-top: 0.6rem; font-style: italic; font-weight: bold; font-size: 1.25rem; text-align: center;">
+          "Les sanglots longs des violons de l'automne..."
         </div>
       `;
       break;
-    case 'luger':
+    case 'photo':
       html = `
-        <div style="font-weight:bold; font-size:1.4rem; margin-bottom:0.6rem; text-transform:uppercase;">GEHEIMNIS</div>
-        <div style="border-bottom:2px solid #000; margin-bottom:1rem;"></div>
-        <div style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 1rem; font-weight: bold; letter-spacing: 0.05em;">
-          5·6·8-7·2-2·8-1·2-1  /  2-8·8-6·2-2·8-7·2-8·8-6·8-1·8-7·1·4<br>
-          1·2-7·8-1·8-4·2-2·2-8  /  5·6·2-2·2-5  /  4·6·8-5·2-8<br>
-          8-9·2-2·1·8-7·1·8-5·2-8·6  /  4·8-1·8-5·8-9
+        <div style="font-size: 1.05rem; line-height: 1.4; text-align: center; font-style: italic; margin-bottom: 0.6rem; border-bottom: 2px dashed #000; padding-bottom: 0.6rem; font-family: 'Special Elite', cursive;">
+          "Camarades, ne cessez jamais le combat. Notre liberté est proche."<br>
+          <span style="font-size: 0.85rem; font-weight: bold; display: block; text-align: right; margin-top: 0.2rem;">— R. GRANDOU</span>
         </div>
-        <div style="font-size:0.9rem; font-style:italic; border-top:2px dashed #000; padding-top:0.6rem;">
-          Échiquier habituel — Clé connue (altitude)
+        <div style="font-weight:bold; font-size:1.15rem; text-align:center; margin-bottom:0.4rem; text-transform:uppercase; font-family:'Special Elite', cursive; color: #8c1c1c;">
+          ALPHABET MORSE DE LA RÉSISTANCE
+        </div>
+        <div style="border-bottom:2px solid #000; margin-bottom:0.8rem;"></div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-family: 'Special Elite', monospace; font-size: 1.05rem; text-align: left; padding: 5px;">
+          <div><strong>A</strong> ·−</div>
+          <div><strong>B</strong> −···</div>
+          <div><strong>C</strong> −·−·</div>
+          <div><strong>D</strong> −··</div>
+          <div><strong>E</strong> ·</div>
+          <div><strong>F</strong> ··−·</div>
+          <div><strong>G</strong> −−·</div>
+          <div><strong>H</strong> ····</div>
+          <div><strong>I</strong> ··</div>
+          <div><strong>J</strong> ·−−−</div>
+          <div><strong>K</strong> −·−</div>
+          <div><strong>L</strong> ·−··</div>
+          <div><strong>M</strong> −−</div>
+          <div><strong>N</strong> −·</div>
+          <div><strong>O</strong> −−−</div>
+          <div><strong>P</strong> ·−−·</div>
+          <div><strong>Q</strong> −−·−</div>
+          <div><strong>R</strong> ·−·</div>
+          <div><strong>S</strong> ···</div>
+          <div><strong>T</strong> −</div>
+          <div><strong>U</strong> ··−</div>
+          <div><strong>V</strong> ···−</div>
+          <div><strong>W</strong> ·−−</div>
+          <div><strong>X</strong> −··−</div>
+          <div><strong>Y</strong> −·−−</div>
+          <div><strong>Z</strong> −−··</div>
+        </div>
+        <div style="border-top:1px dashed #000; margin-top:0.8rem; padding-top:0.6rem; font-size:0.9rem; font-style:italic; text-align:center;">
+          "Transmettez l'espoir à travers les ondes."
         </div>
       `;
       break;
@@ -1299,8 +1354,8 @@ function zoomPaper(paperId) {
       html = `
         <div style="font-weight:bold; font-size:1.35rem; margin-bottom:0.6rem;">NOTES DE T.M.</div>
         <div style="border-bottom:2px solid #000; margin-bottom:1rem;"></div>
-        <div style="font-weight:bold; font-size:1.6rem; margin-bottom:0.6rem; color: #8c1c1c;">AZIMUT : 245°</div>
-        <div style="font-size:1rem; font-style:italic;">Depuis le clocher de Tourtoirac</div>
+        <div style="font-weight:bold; font-size:1.6rem; margin-bottom:0.6rem; color: #8c1c1c;">AZIMUT : 320°</div>
+        <div style="font-size:1rem; font-style:italic;">Depuis Montignac</div>
       `;
       break;
     case 'whisky':
@@ -1311,46 +1366,10 @@ function zoomPaper(paperId) {
         <div style="font-size:0.9rem; text-align:right; margin-top:0.4rem;">— J.E.</div>
       `;
       break;
-    case 'photo':
-      html = `
-        <div style="font-weight:bold; font-size:1.35rem; text-align:center; margin-bottom:0.6rem;">R. GRANDOU</div>
-        <div style="border-bottom:2px solid #000; margin-bottom:1rem;"></div>
-        <div style="font-size:1.15rem; line-height:1.5; text-align:center; font-family: inherit;">
-          "Camarades,<br>
-          Ne cessez jamais le combat.<br>
-          Notre liberté est proche.<br>
-          <strong>Pour la France, pour la patrie.</strong>"
-        </div>
-        <div style="text-align:right; font-size:1rem; margin-top:0.8rem; font-style: italic;">— Roland</div>
-      `;
-      break;
   }
   
   contentEl.innerHTML = html;
   openModal('modal-paper-zoom');
-}
-
-/* ──────────────────────────────────────
-   CARNET — ZOOM SUR PLACE (pas de popup)
-   ────────────────────────────────────── */
-let carnetZoomed = false;
-
-function toggleCarnetZoom() {
-  const wrapper  = document.getElementById('carnet-wrapper');
-  const backdrop = document.getElementById('carnet-backdrop');
-  if (!wrapper) return;
-
-  if (!carnetZoomed) {
-    carnetZoomed = true;
-    wrapper.classList.add('zoomed');
-    if (backdrop) backdrop.style.display = 'block';
-    AudioManager.paperRustle();
-  } else {
-    carnetZoomed = false;
-    wrapper.classList.remove('zoomed');
-    if (backdrop) backdrop.style.display = 'none';
-    AudioManager.paperRustle();
-  }
 }
 
 /* ──────────────────────────────────────
@@ -1437,9 +1456,9 @@ function initTypewriterKeyboardEvents() {
         AudioManager.typewriterKey();
         paper.scrollTop = paper.scrollHeight;
         
-        // Détecter TOURTOIRAC à la fin de la saisie
+        // Détecter MONTIGNAC à la fin de la saisie
         const cleanText = paper.textContent.trim().toUpperCase();
-        if (cleanText.endsWith('TOURTOIRAC')) {
+        if (cleanText.endsWith('MONTIGNAC')) {
           triggerMagicVictoryTyping();
         }
       }
@@ -1450,20 +1469,19 @@ function initTypewriterKeyboardEvents() {
 const MAGIC_REVEAL_TEXT =
 `
 ──────────────────────
-TRANSMISSION REÇUE.
+ORDRE DE MISSION DE T.M.
 5 AOÛT 1944 — 00H17
 
-OPÉRATION CONFIRMÉE.
-POINT DE CHUTE : CUBJAC
-VALLÉE DE L'AUVÉZÈRE
-PÉRIGORD VERT
+COORDONNÉES DE DÉPART : MONTIGNAC.
+UTILISEZ LA CARTE IGN POUR RECHERCHER
+LE POINT DE CHUTE DU PARACHUTAGE.
 
-LE CAMP SE DÉROULERA
-SUR LES TRACES DE
-ROLAND GRANDOU
-ET DES F.F.I.
+RÉGLEZ LE RAPPORTEUR SUR MONTIGNAC.
+AZIMUT DU CONFLUENT : 320°.
 
-RENDEZ-VOUS AU CONFLUENT.
+UNE FOIS LE POINT DE CHUTE IDENTIFIÉ,
+TRANSMETTEZ SON NOM EN MORSE À L'AIDE
+DE LA CLÉ MORSE POUR CONFIRMER L'OPÉRATION.
 
 — WHISKY —`;
 
@@ -1486,9 +1504,15 @@ function triggerMagicVictoryTyping() {
     if (!typewriterActive) return;
     
     if (idx >= MAGIC_REVEAL_TEXT.length) {
-      State.victoryDone = true;
-      AudioManager.victory(); // Jouer le son de victoire directement ici
-      return; // Fin de l'énigme, on laisse la feuille affichée
+      typewriterAutoTyping = false;
+      State.typewriterDecrypted = true;
+      const closeBtn = document.querySelector('#modal-machine .modal-close');
+      if (closeBtn) closeBtn.style.display = 'block';
+      const hint = document.getElementById('typewriter-hint');
+      if (hint) {
+        hint.textContent = "Ordre de mission décrypté. Fermez la machine pour continuer.";
+      }
+      return;
     }
     
     const ch = MAGIC_REVEAL_TEXT[idx];
@@ -1526,7 +1550,7 @@ function toggleLamp() {
     const spotlight = document.getElementById('spotlight');
     if (spotlight) spotlight.style.opacity = '1';
     
-    // Masquer le laser du Luger
+    // Masquer la gâchette du Luger
     const laserContainer = document.getElementById('luger-laser-container');
     if (laserContainer) laserContainer.style.display = 'none';
   } else {
@@ -1537,9 +1561,11 @@ function toggleLamp() {
     const spotlight = document.getElementById('spotlight');
     if (spotlight) spotlight.style.opacity = '0';
     
-    // Afficher le laser du Luger
+    // Toujours réafficher la gâchette du Luger en mode sombre pour continuer de tirer
     const laserContainer = document.getElementById('luger-laser-container');
-    if (laserContainer) laserContainer.style.display = 'block';
+    if (laserContainer) {
+      laserContainer.style.display = 'block';
+    }
   }
 }
 
@@ -1586,65 +1612,95 @@ function showToast(msg) {
 function shootLuger() {
   if (State.lampOn) return;
 
-  // Jouer le bruit de tir synthétique
-  AudioManager.playGunshot();
+  // 1. Jouer le son de tir avec un tout petit retard (25ms) pour s'aligner sur l'affichage
+  setTimeout(() => {
+    AudioManager.playGunshot();
+  }, 25);
 
-  // Muzzle flash sur le canon (côté gauche du container)
-  const laserContainer = document.getElementById('luger-laser-container');
-  if (laserContainer) {
-    const flash = document.createElement('div');
-    flash.style.cssText = `
-      position: absolute;
-      top: 32%;
-      right: 100%;
-      width: 4.5vw;
-      height: 4.5vw;
-      background: radial-gradient(circle, #ffffff 10%, #ffd700 45%, rgba(255, 69, 0, 0.8) 75%, transparent 100%);
-      transform: translate(50%, -50%);
-      z-index: 1000;
-      border-radius: 50%;
-      box-shadow: 0 0 35px #ffd700, 0 0 20px #ff4500;
-      pointer-events: none;
-    `;
-    laserContainer.appendChild(flash);
-    setTimeout(() => { flash.remove(); }, 120);
+  // 2. Afficher le muzzle flash préchargé immédiatement
+  const flash = document.getElementById('muzzle-flash-container');
+  if (flash) {
+    flash.style.display = 'block';
   }
 
-  // Vérifier si le cigare est sorti ("dans la course")
-  if (cigarSlid) {
-    showToast("🔥 Le tir fait mouche ! Le cigare prend feu sous l'impact !");
+  // Masquer temporairement la gâchette / croix verte pendant le tir
+  const laserContainer = document.getElementById('luger-laser-container');
+  if (laserContainer) {
+    laserContainer.style.display = 'none';
+  }
 
-    // Impact visuel sur le cigare
-    const cigar = document.getElementById('obj-cigare');
-    if (cigar) {
-      cigar.style.filter = 'brightness(2.2) contrast(1.5) sepia(1) hue-rotate(-50deg)';
-      setTimeout(() => {
-        cigar.style.filter = 'brightness(0.85) contrast(0.95) sepia(0.35) drop-shadow(0 0 12px #ff4500)';
-      }, 150);
+  // 3. Activer l'état d'explosion lumineuse globale et mettre à jour les ombres immédiatement
+  State.gunshotActive = true;
+  updateShadows();
 
-      // Création de l'effet d'incendie du cigare (petit point rouge incandescent)
-      let burnEffect = document.getElementById('cigar-burn');
-      if (!burnEffect) {
-        burnEffect = document.createElement('div');
-        burnEffect.id = 'cigar-burn';
-        burnEffect.style.cssText = `
-          position: absolute;
-          top: 61%;
-          left: 31%;
-          width: 1.8vw;
-          height: 1.8vw;
-          border-radius: 50%;
-          background: radial-gradient(circle, #ffffff 5%, #ff4500 45%, #ff0000 75%, transparent 100%);
-          box-shadow: 0 0 12px #ff4500, 0 0 25px #ff0000;
-          z-index: 90;
-          pointer-events: none;
-          animation: cigar-burn-glow 1.5s infinite alternate;
-        `;
-        document.getElementById('scene').appendChild(burnEffect);
+  // 4. Masquer le flash et restaurer les ombres après 150ms
+  setTimeout(() => {
+    if (flash) {
+      flash.style.display = 'none';
+    }
+    State.gunshotActive = false;
+    updateShadows();
+    // Réafficher la gâchette immédiatement après le tir si la bougie est toujours éteinte
+    if (!State.lampOn && laserContainer) {
+      laserContainer.style.display = 'block';
+    }
+  }, 150);
+
+  // Vérifier si le cadre n'a pas déjà été tiré
+  if (!State.photoShot) {
+    State.photoShot = true;
+
+    const photo = document.getElementById('obj-photo');
+    const photoTop = document.getElementById('obj-photo-top');
+    const photoBottom = document.getElementById('obj-photo-bottom');
+    const paper = document.getElementById('photo-paper');
+
+    if (photo && photoTop && photoBottom) {
+      // Masquer le cadre photo intact
+      photo.style.display = 'none';
+
+      // Configurer les deux morceaux brisés à leur position de départ parfaitement alignée avec le cadre d'origine
+      photoTop.style.transform = 'rotate(-4deg)';
+      photoBottom.style.transform = 'rotate(-4deg)';
+      photoTop.style.opacity = '1';
+      photoBottom.style.opacity = '1';
+
+      // Les afficher
+      photoTop.style.display = 'block';
+      photoBottom.style.display = 'block';
+
+      // Forcer le reflow du navigateur
+      photoTop.offsetHeight;
+      photoBottom.offsetHeight;
+
+      // Utiliser requestAnimationFrame pour s'assurer que la transition CSS se déclenche de manière fluide depuis la position alignée
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Les deux morceaux restent parfaitement superposés l'un sur l'autre
+          // et tournent dans le sens antihoraire à -10deg (décalage instantané et soudain pour l'impact)
+          photoTop.style.transform = 'rotate(-10deg)';
+          photoTop.style.filter = 'drop-shadow(-5px -5px 15px rgba(0,0,0,0.85)) brightness(0.95)';
+
+          photoBottom.style.transform = 'rotate(-10deg)';
+          photoBottom.style.filter = 'drop-shadow(5px 10px 18px rgba(0,0,0,0.9)) brightness(0.9)';
+        });
+      });
+
+      // Révéler le papier caché AU MILIEU
+      // Le papier est centré dans le cadre, plus bas, plus grand, et avec une rotation asymétrique pour faire naturel
+      if (paper) {
+        paper.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.7s ease, filter 0.7s ease';
+        paper.style.zIndex = '34'; // Entre les morceaux brisés du cadre (z-index sandwich)
+        paper.style.opacity = '1';
+        paper.style.transform = 'translate(3.8vw, 5.5vw) rotate(4deg) scale(1.22)';
+        paper.style.filter = 'brightness(0.88) contrast(0.95) sepia(0.25) drop-shadow(3px 6px 12px rgba(0,0,0,0.75))';
+        paper.style.pointerEvents = 'auto';
       }
+
+      showToast("💥 Le tir percute et BRISE le cadre photo ! Roland Grandou est projeté... Un message secret apparaît au milieu du cadre éclaté.");
     }
   } else {
-    showToast("💨 Le tir se perd dans l'obscurité. Il n'y a rien dans la ligne de mire.");
+    showToast("💥 PAN ! Vous tirez un nouveau coup de feu avec le Luger dans l'obscurité !");
   }
 }
 
@@ -1787,6 +1843,8 @@ function mkFinalizeWord() {
   const isCubjac = codes.length === CUBJAC_MORSE.length &&
                    codes.every((c, i) => c === CUBJAC_MORSE[i]);
   if (isCubjac || word === 'CUBJAC') {
+    State.victoryDone = true;
+    AudioManager.victory(); // Jouer la musique de victoire F.F.I.
     updateRadioStatus('🎯 TRANSMISSION CUBJAC CONFIRMÉE !', true);
     setTimeout(() => showVictoryScreen(), 1200);
   } else {
@@ -1969,10 +2027,8 @@ const OBJECT_HEIGHTS = {
   'obj-machine': 14,
   'obj-whisky': 9,
   'obj-cle-morse': 5,
-  'obj-luger': 4,
+  'luger-wrapper': 4,
   'obj-boussole': 3,
-  'obj-cigare-box': 4,
-  'obj-cigare': 2,
   'obj-carnet': 2,
   'obj-photo': 2,
   'obj-carte': 0.5,
@@ -1988,60 +2044,130 @@ function updateShadows() {
   canvas.height = window.innerHeight;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (!State.lampOn) return;
-  const lampe = document.getElementById('obj-lampe');
-  if (!lampe) return;
-  const rectL = lampe.getBoundingClientRect();
-  const lx = rectL.left + rectL.width / 2;
-  const ly = rectL.top + rectL.height / 2;
-  
-  ctx.filter = 'brightness(0) blur(3px)';
 
-  for (const [id, height] of Object.entries(OBJECT_HEIGHTS)) {
-    const obj = document.getElementById(id);
-    if (!obj || obj.style.display === 'none') continue;
+  const lightSources = [];
 
-    const rect = obj.getBoundingClientRect();
-    const ox = rect.left + rect.width / 2;
-    const oy = rect.top + rect.height / 2;
+  // 1. Le coup de feu (si actif)
+  if (State.gunshotActive) {
+    const wrapper = document.getElementById('luger-wrapper');
+    if (wrapper) {
+      const rect = wrapper.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const x0 = rect.left + rect.width * 0.0788;
+      const y0 = rect.top + rect.height * 0.2535;
+      const angle = -8 * Math.PI / 180;
+      const dx = x0 - cx;
+      const dy = y0 - cy;
+      const gx = cx + dx * Math.cos(angle) - dy * Math.sin(angle);
+      const gy = cy + dx * Math.sin(angle) + dy * Math.cos(angle);
+      lightSources.push({ x: gx, y: gy, type: 'gunshot' });
+    }
+  }
 
-    const dx = ox - lx;
-    const dy = oy - ly;
-    
-    const steps = Math.min(25, Math.floor(8 + height * 1.5));
-    const maxTravel = 0.05 * height;
-    const baseOpacity = 0.18;
+  // 2. La bougie (si active)
+  if (State.lampOn) {
+    const lampe = document.getElementById('obj-lampe');
+    if (lampe) {
+      const rectL = lampe.getBoundingClientRect();
+      const lx = rectL.left + rectL.width / 2;
+      const ly = rectL.top + rectL.height / 2;
+      lightSources.push({ x: lx, y: ly, type: 'candle' });
+    }
+  }
 
-    ctx.save();
-    for(let i=1; i<=steps; i++) {
-      const progress = i / steps;
-      const travelFactor = progress * maxTravel;
-      
-      const tx = dx * travelFactor;
-      const ty = dy * travelFactor;
-      
-      const currentScale = 1 + (progress * 0.008 * height);
-      ctx.globalAlpha = baseOpacity * Math.pow((1 - progress), 1.5);
-      
+  // 3. Le poste radio (si illuminé)
+  const radioEl = document.getElementById('obj-radio');
+  const radioIlluminated = radioEl && radioEl.classList.contains('illuminated');
+  if (radioIlluminated) {
+    const rectR = radioEl.getBoundingClientRect();
+    const rx = rectR.left + rectR.width / 2;
+    const ry = rectR.top + rectR.height / 2;
+    lightSources.push({ x: rx, y: ry, type: 'radio' });
+  }
+
+  // Dessiner les passes pour chaque source lumineuse active
+  ctx.save();
+  for (const src of lightSources) {
+    // Si radio ou gunshot, dessiner la lumière propre à cette source sur le canvas d'arrière-plan
+    if (src.type === 'gunshot') {
       ctx.save();
-      ctx.translate(ox + tx, oy + ty);
-      ctx.scale(currentScale, currentScale);
-      ctx.translate(-ox, -oy);
+      const grad = ctx.createRadialGradient(src.x, src.y, 0, src.x, src.y, window.innerWidth * 0.85);
+      grad.addColorStop(0, 'rgba(255, 90, 0, 0.8)');
+      grad.addColorStop(0.15, 'rgba(255, 40, 0, 0.5)');
+      grad.addColorStop(0.5, 'rgba(255, 20, 0, 0.2)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    } else if (src.type === 'radio') {
+      ctx.save();
+      // Un halo lumineux rouge/orange au sol sous la radio
+      const grad = ctx.createRadialGradient(src.x, src.y, 0, src.x, src.y, window.innerWidth * 0.6);
+      grad.addColorStop(0, 'rgba(230, 40, 40, 0.4)');
+      grad.addColorStop(0.3, 'rgba(200, 20, 20, 0.15)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
+
+    // Dessiner les ombres portées pour cette source
+    ctx.save();
+    ctx.filter = 'brightness(0) blur(3px)';
+
+    for (const [id, height] of Object.entries(OBJECT_HEIGHTS)) {
+      // La source de lumière ne projette pas sa propre ombre
+      if (src.type === 'radio' && id === 'obj-radio') continue;
       
-      let drawTarget = obj;
-      if (obj.tagName.toLowerCase() === 'div') {
-        const img = obj.querySelector('img');
-        if (img && img.complete && img.naturalWidth > 0) drawTarget = img;
-        else { ctx.restore(); continue; }
+      const obj = document.getElementById(id);
+      if (!obj || obj.style.display === 'none') continue;
+
+      const rect = obj.getBoundingClientRect();
+      const ox = rect.left + rect.width / 2;
+      const oy = rect.top + rect.height / 2;
+
+      const dx = ox - src.x;
+      const dy = oy - src.y;
+      
+      // Version "light" extrêmement fluide et performante (maximum 3 itérations) pour éviter tout ralentissement
+      const steps = Math.min(3, Math.floor(1 + height * 0.15));
+      const maxTravel = 0.05 * height;
+      const baseOpacity = src.type === 'gunshot' ? 0.35 : (src.type === 'radio' ? 0.25 : 0.18);
+
+      ctx.save();
+      for(let i=1; i<=steps; i++) {
+        const progress = i / steps;
+        const travelFactor = progress * maxTravel;
+        
+        const tx = dx * travelFactor;
+        const ty = dy * travelFactor;
+        
+        const currentScale = 1 + (progress * 0.008 * height);
+        ctx.globalAlpha = baseOpacity * Math.pow((1 - progress), 1.5);
+        
+        ctx.save();
+        ctx.translate(ox + tx, oy + ty);
+        ctx.scale(currentScale, currentScale);
+        ctx.translate(-ox, -oy);
+        
+        let drawTarget = obj;
+        if (obj.tagName.toLowerCase() === 'div') {
+          const img = obj.querySelector('img');
+          if (img && img.complete && img.naturalWidth > 0) drawTarget = img;
+          else { ctx.restore(); continue; }
+        }
+        if (!(drawTarget instanceof HTMLImageElement) && !(drawTarget instanceof HTMLCanvasElement)) {
+          ctx.restore(); continue;
+        }
+        ctx.drawImage(drawTarget, rect.left, rect.top, rect.width, rect.height);
+        ctx.restore();
       }
-      if (!(drawTarget instanceof HTMLImageElement) && !(drawTarget instanceof HTMLCanvasElement)) {
-        ctx.restore(); continue;
-      }
-      ctx.drawImage(drawTarget, rect.left, rect.top, rect.width, rect.height);
       ctx.restore();
     }
     ctx.restore();
   }
+  ctx.restore();
 }
 
 function startShadowAnimation(durationMs = 600) {
@@ -2054,6 +2180,92 @@ function startShadowAnimation(durationMs = 600) {
   }
   if(shadowAnimationId) cancelAnimationFrame(shadowAnimationId);
   shadowAnimationId = requestAnimationFrame(step);
+}
+
+let mapSuccessLine = null;
+let mapSuccessActive = false;
+
+let lastMapBlockedToastTime = 0;
+function checkMapSuccess() {
+  if (!fullMap || !rapporteurMarker) return;
+  const pos = rapporteurMarker.getLatLng();
+  const MONTIGNAC = [45.0658, 1.1650];
+  const dist = pos.distanceTo(L.latLng(MONTIGNAC));
+
+  // Si le rapporteur est placé sur Montignac (< 800m) et l'azimut vaut précisément 320°
+  if (dist < 800 && Math.abs(rapporteurAngle - 320) === 0) {
+    if (!State.typewriterDecrypted) {
+      const now = Date.now();
+      if (now - lastMapBlockedToastTime > 5000) {
+        showToast("❌ Vous n'avez pas encore décodé l'ordre de mission d'origine sur la Remington. Vous ne connaissez ni le point de départ ni l'azimut !");
+        lastMapBlockedToastTime = now;
+      }
+      return;
+    }
+    triggerMapSuccessAnimation();
+  }
+}
+
+function triggerMapSuccessAnimation() {
+  if (mapSuccessActive) return;
+  mapSuccessActive = true;
+
+  // Jouer des effets sonores thématiques (clink puis tamponnage)
+  AudioManager.clink();
+  setTimeout(() => {
+    AudioManager.stamp();
+  }, 300);
+
+  const montignacCoords = [45.0658, 1.1650];
+  const cubjacCoords = [45.2222, 0.9389];
+
+  // Dessiner un tracé vert dynamique reliant Montignac à Cubjac
+  if (mapSuccessLine) {
+    fullMap.removeLayer(mapSuccessLine);
+  }
+
+  mapSuccessLine = L.polyline([montignacCoords, montignacCoords], {
+    color: '#2ecc71',
+    weight: 5,
+    opacity: 0.9,
+    dashArray: '8, 8',
+    className: 'success-route-line'
+  }).addTo(fullMap);
+
+  let progress = 0;
+  const steps = 25;
+  const interval = setInterval(() => {
+    progress++;
+    const currentLat = montignacCoords[0] + (cubjacCoords[0] - montignacCoords[0]) * (progress / steps);
+    const currentLng = montignacCoords[1] + (cubjacCoords[1] - montignacCoords[1]) * (progress / steps);
+    
+    mapSuccessLine.setLatLngs([montignacCoords, [currentLat, currentLng]]);
+    
+    if (progress >= steps) {
+      clearInterval(interval);
+      highlightCubjacMarker();
+    }
+  }, 25);
+
+  // Afficher le bandeau de victoire sur la carte
+  const banner = document.getElementById('map-success-banner');
+  if (banner) {
+    banner.style.display = 'block';
+  }
+}
+
+function highlightCubjacMarker() {
+  const el = document.getElementById('city-marker-cubjac');
+  if (el) {
+    el.classList.add('pulse-highlight');
+    const label = el.querySelector('.city-label-paper');
+    if (label) {
+      label.style.background = '#2ecc71';
+      label.style.color = '#fff';
+      label.style.borderColor = '#27ae60';
+      label.style.boxShadow = '0 0 15px rgba(46, 204, 113, 0.8)';
+    }
+  }
 }
 
 window.addEventListener('resize', () => { updateShadows(); });
