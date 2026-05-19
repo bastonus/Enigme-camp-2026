@@ -24,6 +24,119 @@ html, body {
 }
 
 /* ══════════════════════════════════════════
+   MESSAGE D'AVERTISSEMENT MOBILE (BLOQUANT)
+══════════════════════════════════════════ */
+#mobile-warning {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: #000;
+  color: #B8A070;
+  font-family: 'Special Elite', cursive;
+  padding: 2rem 1.5rem;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+#mobile-warning::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.4;
+  animation: grain-shift 0.12s steps(1) infinite;
+  z-index: 10;
+}
+
+#mobile-warning .warning-box {
+  width: 100%;
+  max-width: 500px;
+  background: rgba(10, 8, 4, 0.98);
+  border: 1px dashed #B8A070;
+  padding: 2.5rem 2rem;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.85);
+  text-align: left;
+  z-index: 20;
+}
+
+#mobile-warning .warning-box::before {
+  content: 'TRANSMISSION CHIFFRÉE — INTERCEPTÉE';
+  position: absolute;
+  top: -0.7rem;
+  left: 1rem;
+  background: #000;
+  color: #555;
+  font-size: 0.65rem;
+  font-family: 'VT323', monospace;
+  letter-spacing: .15em;
+  padding: 0 .5rem;
+}
+
+#mobile-warning .stamp-warning {
+  border: 2px dashed #C0392B;
+  color: #C0392B;
+  font-family: 'Special Elite', cursive;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  text-transform: uppercase;
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  transform: rotate(5deg);
+  letter-spacing: 1px;
+}
+
+#mobile-warning h2 {
+  font-family: 'VT323', monospace;
+  font-size: 1.8rem;
+  color: #B8A070;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+#mobile-warning .meta-info {
+  font-family: 'VT323', monospace;
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+#mobile-warning .warning-text {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1.2rem;
+  color: #c9b48f;
+  text-align: left;
+}
+
+#mobile-warning .warning-footer {
+  font-family: 'VT323', monospace;
+  font-size: 1rem;
+  color: #555;
+  text-align: left;
+  border-top: 1px dashed #333;
+  padding-top: 1rem;
+  margin-top: 1.5rem;
+  letter-spacing: 2px;
+}
+
+/* On bloque les écrans de type mobile et tablette tactile étroite */
+@media (max-width: 768px), (pointer: coarse) and (max-width: 1024px) {
+  #mobile-warning {
+    display: flex !important;
+  }
+}
+
+/* ══════════════════════════════════════════
    ÉCRAN D'INTRODUCTION
 ══════════════════════════════════════════ */
 #intro-screen {
