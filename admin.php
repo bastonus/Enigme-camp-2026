@@ -55,11 +55,34 @@ $lastRegistration = $totalAgents > 0 ? $results[$totalAgents - 1]['timestamp'] :
   <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
   
   <style>
+    html {
+      height: 100%;
+      overflow: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: #3A2A10 #000;
+    }
+
     /* Reset and General terminal theme styling */
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+    }
+    
+    /* Custom Webkit scrollbars to avoid OS scrollbar paint invalidation flickering */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3A2A10;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #B8A070;
     }
     
     body {
@@ -69,18 +92,20 @@ $lastRegistration = $totalAgents > 0 ? $results[$totalAgents - 1]['timestamp'] :
       font-size: 1rem;
       line-height: 1.5;
       padding: 2.5rem 1rem;
-      min-height: 100vh;
+      height: 100%;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      scrollbar-gutter: stable;
       display: flex;
       justify-content: center;
       align-items: flex-start;
       position: relative;
-      overflow-x: hidden;
     }
 
-    /* Film grain CRT overlay animation */
-    body::before {
+    /* Film grain CRT overlay animation - Fixed relative to viewport to avoid scrollbar repaint collisions */
+    html::before {
       content: '';
-      position: absolute; inset: 0;
+      position: fixed; inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
       pointer-events: none; opacity: 0.25;
       animation: grain-shift 0.12s steps(1) infinite;
