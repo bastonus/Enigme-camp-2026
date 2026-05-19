@@ -3,21 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Opération Cubjac — Ordre de Mission N°4</title>
-  <meta name="description" content="Réseau AS — Secteur Périgord Noir — Août 1944. Mission confidentielle.">
+  <title>Opération Résistance — Ordre de Mission N°4</title>
+  <meta name="description" content="Réseau AS — Secteur Périgord Vert — Août 1944. Mission confidentielle.">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
 
 <!-- ═══════════════════════════════════════ -->
 <!--  ÉCRAN D'INTRODUCTION                  -->
 <!-- ═══════════════════════════════════════ -->
-<div id="intro-screen">
-  <div id="teleype-box">
-    <div id="teletype-text"></div><span id="teleype-cursor"></span>
+<div id="intro-screen" onclick="handleIntroClick(event)">
+  <div id="teletype-box" style="position:relative; width:min(700px, 90vw); margin:auto; text-align:left;">
+    <div id="teletype-text">ORDRE DE MISSION N°4
+====================
+Secteur : Périgord Vert
+Date : 4 août 1944
+
+Émetteur clandestin du réseau AS prêt pour réception.</div><span id="teletype-cursor"></span>
+    
+    <!-- Bouton de démarrage sobre style terminal -->
+    <div id="intro-start-prompt" style="margin-top:25px; font-family:'VT323', monospace; text-align:center;">
+      <button onclick="startMission()" style="background:none; border:1.5px solid #B8A070; color:#B8A070; padding:10px 24px; font-family:inherit; font-size:1.3rem; cursor:pointer; transition:all 0.2s; outline:none;" 
+              onmouseover="this.style.background='#B8A070'; this.style.color='#000';" 
+              onmouseout="this.style.background='none'; this.style.color='#B8A070';">
+        [ COMMENCER LA MISSION ]
+      </button>
+      <div style="margin-top:15px; font-size:0.95rem; color:#555; letter-spacing:1px; text-transform:uppercase;">
+        (Ou appuyez sur ENTRÉE pour débuter)
+      </div>
+    </div>
   </div>
-  <div id="intro-skip" onclick="skipIntro()">[ APPUYER SUR ENTRÉE POUR CONTINUER ]</div>
+
+  <div id="intro-skip" onclick="skipIntro()" style="display:none; text-align:center; font-family:'VT323', monospace; font-size:1rem; color:#444; cursor:pointer; margin-top:25px; letter-spacing:2px;">
+    [ APPUYER SUR ENTRÉE POUR CONTINUER ]
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════ -->
@@ -30,7 +52,7 @@
 
   <!-- Révélations UV (mode lampe éteinte) -->
   <div class="uv-reveal" style="top:58%;left:12%;font-size:1.2rem;transform:rotate(-3deg)">
-    BBC · 49.8 MHz
+    BBC · 58.7 MHz
   </div>
   <div class="uv-reveal" style="top:12%;left:55%;font-size:0.9rem">
     ↑ La Forge d'Ans
@@ -53,53 +75,85 @@
   </div>
 
   <!-- 2. Boîte à Cigares -->
-  <img id="obj-cigare-box" class="obj float-anim" src="img/boite_cigare.png"
+  <img id="obj-cigare-box" class="obj" src="img/boite_cigare.png"
        alt="Boîte à cigares Villiger" draggable="false"
        onclick="openCigareBox()" title="Une boîte à cigares de luxe…">
-  
-  <!-- Cigare caché dans la boîte -->
+
+  <!-- Le cigare Havane — caché sous la boîte, sort vers le haut au clic -->
   <img id="obj-cigare" class="obj" src="img/cigare.png" alt="Cigare"
-       draggable="false" onclick="slideCigar()" title="Un cigare Havane…"
+       draggable="false" onclick="toggleCigarRoll()" title="Un cigare Havane…"
        style="display:none; z-index:13;">
 
-  <!-- 3. Carte IGN -->
-  <img id="obj-carte" class="obj" src="img/carte.png" alt="Carte IGN Dordogne"
-       draggable="false" onclick="openModal('modal-carte')" title="Une carte d'état-major…">
+  <!-- Étiquette — apparaît SOUS le cigare après roulement vers la droite -->
+  <div id="cigar-label" onclick="zoomPaper('cigar')" style="position: absolute; top: 66%; left: 22%; width: 12vw; opacity: 0; pointer-events: none; transition: transform 0.8s ease, opacity 0.8s ease; transform: scale(0.5) rotate(15deg); z-index: 14; background: url('paper.png') center/cover no-repeat; box-shadow: 2px 4px 8px rgba(0,0,0,0.5); padding: 1rem; font-family: 'Special Elite', cursive; color: #000; font-size: 0.6rem; line-height: 1.2; border-radius: 1px; text-align: center; cursor: pointer;">
+    <div style="font-weight: bold; font-size: 0.7rem; border-bottom: 1px solid #000; padding-bottom: 0.2rem; margin-bottom: 0.3rem; text-transform: uppercase;">Réseau AS</div>
+    <div style="font-weight: bold; font-size: 0.8rem;">BBC · 58.7 MHz</div>
+    <div style="margin-bottom: 0.2rem; font-size: 0.6rem;">Écoute : 21h45</div>
+    <div style="border-top: 1px dashed #000; padding-top: 0.2rem; margin-top: 0.2rem; font-style: italic; font-weight: bold; font-size: 0.6rem;">"Les sanglots longs..."</div>
+  </div>
 
-  <!-- 4. Carnet de notes -->
-  <img id="obj-carnet" class="obj" src="img/carnet.png" alt="Carnet de notes"
-       draggable="false" onclick="openModal('modal-carnet')" title="Un carnet de notes…">
+  <!-- 3. Carte IGN — mini-carte Leaflet statique (non déplaçable) -->
+  <div id="obj-carte" class="obj" onclick="openMapModal()" title="Carte d'état-major IGN 1950 — cliquez pour agrandir"></div>
+
 
   <!-- 5. Luger P08 -->
   <img id="obj-luger" class="obj" src="img/luger.png" alt="Luger P08"
        draggable="false" onclick="slideLuger()" title="Un Luger posé sur quelque chose…">
-  <!-- Papier caché sous le Luger -->
-  <div id="luger-paper" style="position:absolute;top:42%;left:81%;opacity:0;z-index:9;pointer-events:none;transition:opacity .5s;">
-    <svg viewBox="0 0 110 70" xmlns="http://www.w3.org/2000/svg" style="width:10vw;filter:drop-shadow(2px 4px 8px rgba(0,0,0,0.5))">
-      <rect width="110" height="70" fill="#f0e8b0" rx="1"/>
-      <text x="55" y="12" font-size="5" fill="#8a0000" font-family="serif" text-anchor="middle" font-weight="bold">GEHEIMNIS</text>
-      <line x1="5" y1="16" x2="105" y2="16" stroke="#8a0000" stroke-width="0.5"/>
-      <text x="55" y="26" font-size="4.5" fill="#2a1a00" font-family="serif" text-anchor="middle">18-2 / 8-1-2 / 18-2-1-8</text>
-      <text x="55" y="36" font-size="4.5" fill="#2a1a00" font-family="serif" text-anchor="middle">2-1-8 / 1-8 / 18-2-1 / 8-1</text>
-      <text x="55" y="50" font-size="4" fill="#5a3a00" font-family="serif" text-anchor="middle" font-style="italic">Échiquier habituel — Clé connue</text>
-    </svg>
+
+  <!-- 5b. Laser et Gâchette du Luger en mode lampe éteinte -->
+  <div id="luger-laser-container" style="position: absolute; top: 36.98%; left: 71.22%; width: 16vw; height: 10.5vw; pointer-events: none; z-index: 95; display: none;">
+    <!-- Ligne laser qui part du canon du flingue (le canon est à gauche de l'image, vers top: 32%, left: 0%) -->
+    <div id="luger-laser-line" style="position: absolute; top: 32%; right: 100%; width: 80vw; height: 3px; background: #ff3b30; box-shadow: 0 0 12px #ff3b30, 0 0 4px #ff3b30; animation: laser-flicker 0.15s infinite alternate; opacity: 0.85;"></div>
+    
+    <!-- Cercle lumineux clignotant autour de la gâchette (environ top: 58%, left: 46%) -->
+    <div id="luger-trigger-circle" onclick="shootLuger()" style="position: absolute; top: 58%; left: 46%; width: 2.5vw; height: 2.5vw; transform: translate(-50%, -50%); border: 2.5px dashed #ff3b30; border-radius: 50%; cursor: pointer; pointer-events: auto; box-shadow: 0 0 10px #ff3b30; animation: trigger-pulse 1.2s infinite; background: rgba(255, 59, 48, 0.05);" title="Presser la gâchette..."></div>
   </div>
 
-  <!-- 6. Boussole -->
+  <!-- 6. Boussole — cliquer pour ouvrir le mini-jeu d'azimut -->
   <img id="obj-boussole" class="obj" src="img/boussole.png" alt="Boussole"
-       draggable="false" onclick="flipBoussole()" title="Une boussole en laiton…">
+       draggable="false" onclick="clickBoussole()" title="Une boussole en laiton… Orientez-la sur le bon azimut.">
 
   <!-- 7. Bougie -->
-  <img id="obj-lampe" class="obj" src="img/bougie.png" alt="Bougie allumée"
-       draggable="false" onclick="toggleLamp()" title="Une bougie posée là…">
+  <img id="obj-lampe" class="obj" src="img/bougie.png" alt="Bougie"
+       draggable="false" onclick="toggleLamp()" title="Une bougie. Cliquez pour l'allumer/l'éteindre.">
 
-  <!-- 8. Machine à écrire -->
+  <!-- 8. Carnet de codes — texte intégré, zoom sur place au clic -->
+  <div id="carnet-wrapper" class="obj" onclick="toggleCarnetZoom()" title="Carnet de décryptage…">
+    <img id="obj-carnet" src="img/carnet.png" alt="Carnet de codes" draggable="false" style="width:100%; height:auto; display:block; pointer-events:none;">
+    <!-- Texte superposé sur les pages du carnet — style machine à écrire N&B -->
+    <div id="carnet-overlay">
+      <!-- Page gauche -->
+      <div class="carnet-page">
+        <div class="carnet-title">Échiquier / Clé : 182</div>
+        <div class="carnet-grid">
+          <span class="cg-h">·</span><span class="cg-h">1</span><span class="cg-h">2</span><span class="cg-h">3</span><span class="cg-h">4</span><span class="cg-h">5</span>
+          <span class="cg-h">1</span><span class="cg-c">A</span><span class="cg-c">B</span><span class="cg-c">C</span><span class="cg-c">D</span><span class="cg-c">E</span>
+          <span class="cg-h">2</span><span class="cg-c">F</span><span class="cg-c">G</span><span class="cg-c">H</span><span class="cg-c">I</span><span class="cg-c">J</span>
+          <span class="cg-h">3</span><span class="cg-c">K</span><span class="cg-c">L</span><span class="cg-c">M</span><span class="cg-c">N</span><span class="cg-c">O</span>
+          <span class="cg-h">4</span><span class="cg-c">P</span><span class="cg-c">Q</span><span class="cg-c">R</span><span class="cg-c">S</span><span class="cg-c">T</span>
+          <span class="cg-h">5</span><span class="cg-c">U</span><span class="cg-c">V</span><span class="cg-c">W</span><span class="cg-c">X</span><span class="cg-c">Y</span>
+          <span class="cg-h">6</span><span class="cg-c">Z</span><span class="cg-c">.</span><span class="cg-c">.</span><span class="cg-c">.</span><span class="cg-c">.</span>
+        </div>
+        <div class="carnet-note">Clé = altitude IGN</div>
+      </div>
+      <!-- Page droite -->
+      <div class="carnet-page">
+        <div class="carnet-title">Msg. codé</div>
+        <div class="carnet-encoded">5·6·8-7·2 / 2-8·8-6·2<br>4·6·8-5·2-8 / 8-9·2</div>
+        <div class="carnet-decoded">« Azimut 245°<br>depuis Tourtoirac.<br>Le confluent. »</div>
+      </div>
+    </div>
+  </div>
+  <!-- Fond sombre quand le carnet est zoomé -->
+  <div id="carnet-backdrop" onclick="toggleCarnetZoom()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:490;"></div>
+
+  <!-- 8b. Machine à écrire -->
   <img id="obj-machine" class="obj" src="img/machine_ecrire.png" alt="Machine à écrire Remington"
-       draggable="false" onclick="openModal('modal-machine')" title="La Remington du Facteur…">
+       draggable="false" onclick="openTypewriter()" title="La Remington du Facteur… Cliquez pour insérer une page blanche et écrire.">
 
   <!-- 9. Journal La Dépêche -->
   <img id="obj-journal" class="obj" src="img/journal.png" alt="Journal La Dépêche"
-       draggable="false" onclick="openModal('modal-journal')" title="Un vieux journal…">
+       draggable="false" style="pointer-events: none;">
 
   <!-- 10. Clé Morse -->
   <img id="obj-cle-morse" class="obj" src="img/cle_morse.png" alt="Clé télégraphique"
@@ -108,20 +162,20 @@
   <!-- 11. Bouteille de Whisky (remplace la flasque) -->
   <img id="obj-whisky" class="obj" src="img/whisky.png" alt="Bouteille de Whisky"
        draggable="false" onclick="interactWhisky()" title="Une bouteille de whisky…">
-  <!-- Papier qui sort de la bouteille -->
-  <div id="whisky-paper" style="position:absolute;top:67%;left:80%;opacity:0;z-index:9;pointer-events:none;transition:opacity .5s;">
-    <svg viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg" style="width:8vw;filter:drop-shadow(2px 4px 8px rgba(0,0,0,0.5))">
-      <rect width="100" height="50" fill="#f0e8b0" rx="1"/>
-      <text x="50" y="15" font-size="4" fill="#2a1a00" font-family="serif" text-anchor="middle">Coordonnées parachutage:</text>
-      <text x="50" y="25" font-size="4" fill="#2a1a00" font-family="serif" text-anchor="middle">45°01'N — 1°05'E</text>
-      <text x="50" y="40" font-size="3" fill="#5a3a00" font-family="serif" text-anchor="middle" font-style="italic">J'aurais bien gardé les armes.</text>
-      <text x="50" y="45" font-size="3" fill="#5a3a00" font-family="serif" text-anchor="middle" font-style="italic">— J.E.</text>
-    </svg>
-  </div>
 
   <!-- 12. Photo de Roland Grandou -->
   <img id="obj-photo" class="obj" src="img/photo.png" alt="Photo de Roland Grandou"
-       draggable="false" onclick="showPhotoTribute()" title="Une photo encadrée…">
+       draggable="false" onclick="slidePhoto()" title="Une photo encadrée…">
+  <!-- Papier caché sous la photo de Roland Grandou -->
+  <div id="photo-paper" onclick="zoomPaper('photo')" style="position:absolute; top:35%; left:-4%; opacity:0; filter:brightness(0.2) contrast(0.8) sepia(0.65) hue-rotate(-12deg) drop-shadow(1px 2px 4px rgba(0,0,0,0.95)); z-index:9; pointer-events:none; transition:transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease; transform: rotate(0deg); width:14vw; padding:1rem; background:url('paper.png') center/cover no-repeat; box-shadow:2px 4px 8px rgba(0,0,0,0.5); border-radius:1px; font-family:'Special Elite',cursive; color:#000; font-size:0.8rem; line-height:1.2; text-align:left; cursor:pointer;">
+    <div style="font-weight:bold; font-size:0.8rem; text-align:center; margin-bottom:0.3rem;">R. GRANDOU</div>
+    <div style="border-bottom:1px solid #000; margin-bottom:0.4rem;"></div>
+    <div style="font-size:0.6rem; line-height:1.3;">
+      "Camarades...<br>
+      Ne cessez jamais le combat."
+    </div>
+    <div style="font-size:0.2rem; font-style:italic; margin-top:0.2rem; text-align:center;">[Clic pour zoom]</div>
+  </div>
 
 </div><!-- /scene -->
 
@@ -141,130 +195,376 @@
   </div>
 </div>
 
-<!-- Fiche Aide-mémoire Morse flottante -->
-<div id="morse-sheet" class="morse-paper-float" style="display:none;">
-  <span class="morse-paper-close" onclick="document.getElementById('morse-sheet').style.display='none'">✕</span>
-  <h3>AIDE-MÉMOIRE — CODE MORSE</h3>
-  <div id="morse-table"></div>
-</div>
 
 <!-- Sous-titres / Statut radio à l'écran -->
 <div id="radio-status-bar"></div>
 
 <!-- ═══════════════════════════════════════ -->
-<!--  MODAL — CARTE LEAFLET                 -->
+<!--  MODAL — TUNING DE LA RADIO             -->
 <!-- ═══════════════════════════════════════ -->
-<div id="modal-carte" class="modal-overlay">
-  <div class="modal-box" style="width:95vw;height:88vh;padding:0;overflow:hidden;position:relative;">
-    <span class="modal-close" onclick="closeModal('modal-carte')" style="z-index:1000;background:rgba(0,0,0,0.7);padding:.3rem .6rem;border-radius:3px;">✕</span>
-    <div id="map"></div>
-    <div style="position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);background:rgba(10,6,2,0.85);color:#d4c890;font-family:'Special Elite',cursive;font-size:.8rem;padding:.5rem 1rem;z-index:1000;border:1px solid #3a2a10;">
-      🔍 Cherche le point coté de <strong>La Forge d'Ans</strong> — utilise la loupe
-    </div>
-    <!-- Loupe (draggable) -->
-    <div id="magnifier" style="position:absolute;width:90px;height:90px;border-radius:50%;border:3px solid rgba(200,170,80,0.8);background:rgba(255,240,200,0.12);z-index:800;top:40%;left:45%;cursor:grab;display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 0 0 1px rgba(200,170,80,0.3),inset 0 0 20px rgba(255,220,100,0.05);">
-      🔍
-    </div>
-    <!-- Altitude révélée -->
-    <div id="altitude-reveal" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,6,2,0.95);color:#D4820A;font-family:'Special Elite',cursive;font-size:1.4rem;padding:1.5rem 2rem;border:1px solid #D4820A;z-index:900;text-align:center;">
-      📍 LA FORGE D'ANS<br>
-      <span style="font-size:2.5rem;color:#FFD700;">ALT. 182 m</span><br>
-      <small style="font-size:.8rem;color:#8a7050;">Cette altitude est ta clé. Note-la.</small><br>
-      <button onclick="document.getElementById('altitude-reveal').style.display='none'" style="margin-top:.8rem;background:none;border:1px solid #D4820A;color:#D4820A;padding:.3rem .8rem;cursor:pointer;font-family:'Special Elite',cursive;">Noté ✓</button>
-    </div>
-  </div>
-</div>
-
 <!-- ═══════════════════════════════════════ -->
-<!--  MODAL — CARNET / ÉCHIQUIER            -->
+<!--  MODAL — TUNING DE LA RADIO             -->
 <!-- ═══════════════════════════════════════ -->
-<div id="modal-carnet" class="modal-overlay">
-  <div class="modal-box">
-    <span class="modal-close" onclick="closeModal('modal-carnet')">✕</span>
-    <h3>Échiquier de substitution — Réseau AS</h3>
-    <div class="note-margin">
-      La clé est le nombre trouvé sur la carte. Ordonne les chiffres, complète la grille.
-    </div>
-    <div id="cipher-grid-container" class="cipher-grid"></div>
-    <div class="note-margin" style="margin-top:1rem;">Message intercepté sous l'objet lourd :</div>
-    <div class="encoded-message" id="encoded-msg">
-      18-2 · 8-1-2 · 18-2-1-8 · 2-1-8-2-1 · 8-2-1 · 1-8 · 18-2-1 · 8-1
-    </div>
-    <div id="decoded-result" style="display:none;margin-top:1rem;padding:1rem;background:rgba(0,80,0,0.15);border:1px solid #1a6020;color:#1a4010;font-family:'Caveat',cursive;font-size:1.3rem;text-align:center;">
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════ -->
-<!--  MODAL — MACHINE À ÉCRIRE              -->
-<!-- ═══════════════════════════════════════ -->
-<div id="modal-machine" class="modal-overlay">
-  <div class="modal-box">
-    <span class="modal-close" onclick="closeModal('modal-machine')">✕</span>
-    <h2 style="font-family:'Special Elite',cursive;color:#D4820A;font-size:1.2rem;margin-bottom:1rem;">
-      REMINGTON JUNIOR — LE FACTEUR
-    </h2>
-    <p style="font-family:'VT323',monospace;color:#666;font-size:.9rem;margin-bottom:.8rem;">
-      Tape le nom du village cible pour valider la transmission :
-    </p>
-    <div>
-      <div id="typewriter-paper" style="min-width:260px;text-align:center;"><span id="typed-text"></span><span id="type-cursor" style="animation:blink .7s step-start infinite">|</span></div>
-    </div>
-    <p class="key-hint">[ Tape au clavier · RETOUR ARRIÈRE pour corriger ]</p>
-    <div id="machine-feedback" style="min-height:1.5rem;margin-top:.8rem;font-family:'VT323',monospace;font-size:1rem;color:#888;"></div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════ -->
-<!--  MODAL — JOURNAL                       -->
-<!-- ═══════════════════════════════════════ -->
-<div id="modal-journal" class="modal-overlay">
-  <div class="modal-box" style="background:#e8dcc8;color:#2a1a00;width:min(600px, 95vw);max-height:90vh;">
-    <span class="modal-close" onclick="closeModal('modal-journal')">✕</span>
-    <h2 style="font-family:'Special Elite',cursive;text-align:center;border-bottom:2px solid #2a1a00;padding-bottom:.5rem;margin-bottom:1rem;font-size:2rem;">La Dépêche du Périgord</h2>
-    <div style="font-family:'Special Elite',cursive;font-size:0.9rem;text-align:center;margin-bottom:1.5rem;letter-spacing:.1em;">Mardi 3 août 1944 — Édition locale</div>
+<div id="modal-radio-tuner" class="modal-overlay">
+  <!-- Boîtier en bakélite/bois sombre avec bordures épaisses -->
+  <div class="modal-box" style="width: min(560px, 92vw); background: linear-gradient(135deg, #2c1e13, #150e09); border: 14px solid #0f0a06; border-radius: 6px; box-shadow: inset 0 0 60px rgba(0,0,0,0.9), 0 20px 50px rgba(0,0,0,0.95); padding: 2.5rem 2rem; color: #d4c890; text-align: center; font-family: 'Special Elite', cursive; position: relative;">
     
-    <div style="column-count:2;column-gap:2rem;font-family:serif;font-size:0.95rem;text-align:justify;line-height:1.4;">
-      <p><strong>L'effort de guerre.</strong> Les autorités rappellent à la population que le couvre-feu est strictement maintenu à 22h. Toute infraction sera sévèrement punie.</p>
-      <p>Le ravitaillement reste difficile dans la région, malgré les promesses. Les tickets de rationnement du mois d'août sont disponibles à la mairie.</p>
-      
-      <h3 style="font-family:'Special Elite',cursive;font-size:1.1rem;margin:1.5rem 0 .5rem;">PETITES ANNONCES</h3>
-      <p>Cherche bicyclette en bon état, pneus récents. S'adresser à la boulangerie M.</p>
-      
-      <div style="border:2px solid #00aaff;padding:.5rem;margin:.5rem 0;background:rgba(0,170,255,0.1);position:relative;">
-        <div style="position:absolute;top:-10px;right:-10px;color:#00aaff;font-size:1.5rem;font-family:'Caveat',cursive;">!</div>
-        <strong>À VENDRE :</strong> Forge artisanale, outils complets. Vue imprenable. <strong style="color:#a00;">Alt. 182m.</strong> S'adresser au propriétaire, chemin des Résistants, Ans. Contacter : M. Dupont avant 22h.
+    <!-- Vis métalliques aux 4 coins -->
+    <div style="position:absolute; top:8px; left:8px; width:14px; height:14px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #777, #222); border:1px solid #111; box-shadow:1px 1px 2px rgba(0,0,0,0.8);"></div>
+    <div style="position:absolute; top:8px; right:8px; width:14px; height:14px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #777, #222); border:1px solid #111; box-shadow:1px 1px 2px rgba(0,0,0,0.8);"></div>
+    <div style="position:absolute; bottom:8px; left:8px; width:14px; height:14px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #777, #222); border:1px solid #111; box-shadow:1px 1px 2px rgba(0,0,0,0.8);"></div>
+    <div style="position:absolute; bottom:8px; right:8px; width:14px; height:14px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #777, #222); border:1px solid #111; box-shadow:1px 1px 2px rgba(0,0,0,0.8);"></div>
+
+    <span class="modal-close" onclick="closeModal('modal-radio-tuner')" style="z-index: 10; color: #a58e6f; top: 1rem; right: 1.5rem; text-shadow: 0 2px 4px #000;">✕</span>
+    
+    <!-- Plaque d'identification métallique -->
+    <div style="background: linear-gradient(to bottom, #555, #222); padding: 8px 25px; border: 2px solid #111; border-radius: 2px; display: inline-block; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2);">
+      <h3 style="color: #dfd8c8; margin: 0; font-family: 'Courier New', monospace; letter-spacing: 2px; font-size: 1.1rem; text-shadow: -1px -1px 0 #000; font-weight:bold;">ÉMETTEUR-RÉCEPTEUR MK. II</h3>
+    </div>
+
+    <!-- Cadran Analogique Rétroéclairé -->
+    <div style="position: relative; height: 95px; background: #080604; border: 3px solid #1a120b; border-bottom-color:#3a291a; border-radius: 2px; box-shadow: inset 0 0 25px rgba(0,0,0,0.9), 0 2px 0 rgba(255,255,255,0.05); overflow: hidden; margin-bottom: 35px; display: flex; align-items: center; justify-content: center;">
+      <!-- Lueur jaune/orange -->
+      <div id="tuner-glow" style="position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(255,160,20,0.18) 0%, transparent 75%); transition: background 0.5s ease; pointer-events: none;"></div>
+
+      <div style="position: absolute; inset: 0 20px; pointer-events: none;">
+        <!-- Lignes de graduation et nombres -->
+        <div style="position: absolute; top: 25px; left: 0; right: 0; border-bottom: 1px solid rgba(255,200,100,0.3);"></div>
+        <div style="position: absolute; top: 40px; left: 0; right: 0; display: flex; justify-content: space-between; font-size: 0.95rem; color: rgba(255,200,100,0.8); font-family: 'VT323', monospace; text-shadow: 0 0 4px rgba(255,160,20,0.5);">
+          <span>40</span>
+          <span>45</span>
+          <span style="font-weight: bold; color: rgba(255,220,120,1);">50</span>
+          <span>55</span>
+          <span>60</span>
+        </div>
       </div>
       
-      <p>Perdu chien berger, quartier de la gare. Récompense si ramené.</p>
+      <!-- Aiguille rouge -->
+      <div id="tuner-needle" style="position: absolute; top: 0; bottom: 0; left: 16.5%; width: 2px; background: #e62e00; box-shadow: 0 0 10px #e62e00; pointer-events: none; transition: left 0.1s ease-out;">
+        <div style="position: absolute; top: 15px; left: -3px; width: 8px; height: 8px; border-radius: 50%; background: #ff4000; box-shadow: 0 0 5px #ff4000;"></div>
+      </div>
+    </div>
+
+    <!-- Contrôles du bas -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 10px;">
+      
+      <!-- Bouton d'alimentation gros bouton rouge poussoir -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <div style="font-size:0.7rem; color:#888; font-family:'Courier New', monospace; letter-spacing:1px;">POWER</div>
+        <button id="tuner-power-btn" onclick="toggleTunerPower()" style="width: 42px; height: 42px; background: radial-gradient(circle at 35% 35%, #ff3b30, #a90b00); border: 3px solid #1a0f05; border-radius: 50%; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.3); transition: transform 0.1s, box-shadow 0.1s; outline:none; padding:0; position: relative;">
+          <!-- Reflet brillant -->
+          <div style="position:absolute; top:4px; left:8px; width:10px; height:6px; background:rgba(255,255,255,0.4); border-radius:50%; transform:rotate(-20deg);"></div>
+        </button>
+        <div style="font-size:0.65rem; color:#a03030; font-weight:bold; margin-top:5px;" id="tuner-power-label">OFF</div>
+      </div>
+
+      <!-- Affichage digital Nixie-style -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <div style="font-size:0.7rem; color:#888; font-family:'Courier New', monospace; letter-spacing:1px;">FRÉQUENCE (MHz)</div>
+        <div style="font-family: 'VT323', monospace; font-size: 2.8rem; background: #050302; border: 2px solid #2a1b10; border-top-color:#110a05; padding: 5px 25px; border-radius: 2px; color: #ffae00; min-width: 130px; text-shadow: 0 0 12px rgba(255,150,0,0.6); display: flex; justify-content: center; box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);">
+          <span id="tuner-freq-val">43.2</span>
+        </div>
+      </div>
+
+      <!-- Gros bouton rotatif de syntonisation -->
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <div style="font-size:0.7rem; color:#888; font-family:'Courier New', monospace; letter-spacing:1px;">TUNING</div>
+        <!-- Input range invisible par dessus un design de bouton (simplifié ici avec des flèches autour) -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button onclick="adjustTuner(-0.1)" style="background: linear-gradient(to bottom, #444, #111); border: 1px solid #000; color: #aaa; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; box-shadow: 0 3px 5px rgba(0,0,0,0.6); outline:none;">◀</button>
+          
+          <div style="position:relative; width: 70px; height: 70px; background: radial-gradient(circle at 40% 40%, #555, #111); border-radius: 50%; border: 3px solid #0a0a0a; box-shadow: 0 6px 15px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.1);">
+            <div style="position:absolute; top:8px; left:50%; transform:translateX(-50%); width:4px; height:12px; background:#ccc; border-radius:2px;"></div>
+            <!-- Le slider invisible recouvre le bouton pour permettre le drag -->
+            <input type="range" id="tuner-slider" min="40.0" max="60.0" step="0.1" value="43.2" style="position:absolute; inset:0; opacity:0; cursor:ew-resize;">
+          </div>
+          
+          <button onclick="adjustTuner(0.1)" style="background: linear-gradient(to bottom, #444, #111); border: 1px solid #000; color: #aaa; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; box-shadow: 0 3px 5px rgba(0,0,0,0.6); outline:none;">▶</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!--  MODAL — CARTE IGN PLEIN ÉCRAN        -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-carte" style="display:none; position:fixed; inset:0; z-index:800; background:#1a1208;">
+  <!-- Bouton fermer -->
+  <button id="map-close-btn" onclick="closeMapModal()" style="position:fixed; top:1.2rem; right:1.4rem; z-index:900; background:rgba(20,12,4,0.85); border:1.5px solid #8a7040; color:#d4c890; font-size:1.6rem; width:44px; height:44px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.7); transition:all 0.2s;" onmouseover="this.style.background='#8a7040'; this.style.color='#fff';" onmouseout="this.style.background='rgba(20,12,4,0.85)'; this.style.color='#d4c890';">✕</button>
+  <!-- Sélecteur de couche (masqué selon demande) -->
+  <div style="position:fixed; top:1.2rem; left:1.4rem; z-index:900; display:none; gap:8px;">
+    <button id="map-layer-topo" onclick="setMapLayer('topo')" style="background:rgba(20,12,4,0.85); border:1.5px solid #8a7040; color:#d4c890; font-family:'Special Elite',cursive; font-size:0.75rem; padding:6px 12px; cursor:pointer; border-radius:2px; transition:all 0.2s;">IGN 1950</button>
+    <button id="map-layer-ortho" onclick="setMapLayer('ortho')" style="background:rgba(20,12,4,0.85); border:1.5px solid #4a4030; color:#7a6850; font-family:'Special Elite',cursive; font-size:0.75rem; padding:6px 12px; cursor:pointer; border-radius:2px; transition:all 0.2s;">Ortho 1950</button>
+  </div>
+  <!-- Conteneur Leaflet plein écran -->
+  <div id="fullscreen-map" style="width:100%; height:100%;"></div>
+  <!-- Rapporteur draggable -->
+  <div id="rapporteur" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:280px; height:280px; cursor:move; z-index:850; touch-action:none; user-select:none;">
+    <svg id="rapporteur-svg" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" width="280" height="280" style="pointer-events:none; overflow:visible;">
+      <!-- Demi-cercle rapporteur (fond blanc semi-transparent, bordure noire épaisse) -->
+      <path d="M10,140 A130,130 0 0,1 270,140 Z" fill="rgba(255,255,255,0.75)" stroke="#111" stroke-width="2.5"/>
+      <circle cx="140" cy="140" r="4" fill="#111"/>
+      <!-- Ticks et labels du rapporteur -->
+      <!-- Générés via JS dans initModalMap() -->
+      <!-- Ligne d'azimut (bras mobile) -->
+      <line id="rapporteur-arm" x1="140" y1="140" x2="140" y2="10" stroke="#e74c3c" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrowhead)"/>
+      <defs>
+        <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="4" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#e74c3c"/>
+        </marker>
+      </defs>
+      <!-- Point central -->
+      <circle id="rapporteur-center" cx="140" cy="140" r="5" fill="#e74c3c" opacity="0.9"/>
+      <circle cx="140" cy="140" r="2" fill="#fff"/>
+    </svg>
+    <!-- Instructions intégrées au rapporteur -->
+    <div style="position:absolute; top:70px; left:50%; transform:translateX(-50%); width:200px; text-align:center; pointer-events:none;">
+      <div style="font-family:'Special Elite',cursive; font-size:12px; color:#111; font-weight:bold; line-height:1.3; opacity:0.85; margin-bottom: 6px;">
+        Prenez l'azimut du point de chute avec les flèches du clavier ◀ ▶
+      </div>
+      <div style="display:inline-block; background:rgba(255,255,255,0.9); border:1px solid #111; padding:2px 10px; border-radius:4px;">
+        <span style="font-family:'Special Elite',cursive; color:#111; font-size:0.75rem; font-weight:bold;">AZIMUT : </span>
+        <span id="rap-angle-display" style="font-family:'VT323',monospace; font-size:1.4rem; color:#e74c3c; font-weight:bold;">0°</span>
+      </div>
     </div>
   </div>
 </div>
+
+<!--  MODAL — BOUSSOLE D'AZIMUT            -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-boussole" class="modal-overlay">
+  <div class="modal-box" style="position:relative;">
+    <span class="modal-close" onclick="closeModal('modal-boussole')">✕</span>
+    <div class="compass-modal-content" style="display:flex; flex-direction:column; align-items:center; width:100%;">
+      <h3 style="font-family:'Special Elite', cursive; text-align:center; color:#d4c890; margin-top:0; margin-bottom:5px; font-size:1.4rem; letter-spacing:1px;">BOUSSOLE D'AZIMUT</h3>
+      <p id="compass-instruction" style="font-family:'Special Elite', cursive; text-align:center; color:#a89060; font-size:0.85rem; margin-bottom:1.2rem; line-height:1.4;">Orientez la boussole pour viser le village où a lieu le parachutage. L'azimut est noté sur le document déchiffré.</p>
+      
+      <div class="compass-game-area" style="position:relative; width:280px; height:305px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; margin:10px 0;">
+        <!-- Index marker indicating the top (index pointer) -->
+        <div class="compass-index-pointer" style="font-size:1.4rem; color:#e74c3c; line-height:1; margin-bottom:2px; z-index:15; position:relative; text-shadow:0 2px 4px rgba(0,0,0,0.5); user-select:none;">▼</div>
+        
+        <!-- Rotating compass disk -->
+        <div id="compass-wheel-container" style="position:relative; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle, #2a2015 60%, #151008 100%); border:8px double #8a7040; box-shadow:0 10px 25px rgba(0,0,0,0.8), inset 0 5px 15px rgba(0,0,0,0.6); cursor:grab; user-select:none; touch-action:none;">
+          <div id="compass-wheel" style="width:100%; height:100%; transition:transform 0.1s ease-out; pointer-events:none;">
+            <svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style="pointer-events:none;">
+<defs><radialGradient id="cbg" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#3a2812"/><stop offset="100%" stop-color="#110b04"/></radialGradient></defs>
+<circle cx="140" cy="140" r="135" fill="url(#cbg)"/>
+<circle cx="140" cy="140" r="132" fill="none" stroke="#c8a050" stroke-width="2"/>
+<circle cx="140" cy="140" r="108" fill="none" stroke="#c8a050" stroke-width="0.4" stroke-opacity="0.4"/>
+<circle cx="140" cy="140" r="80" fill="none" stroke="#c8a050" stroke-width="0.3" stroke-opacity="0.3"/>
+<line x1="140.0" y1="12.0" x2="140.0" y2="32.0" stroke="#e74c3c" stroke-width="2.5"/>
+<line x1="151.2" y1="12.5" x2="150.6" y2="18.5" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="162.2" y1="13.9" x2="160.5" y2="23.8" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="173.1" y1="16.4" x2="171.6" y2="22.2" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="183.8" y1="19.7" x2="180.4" y2="29.1" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="194.1" y1="24.0" x2="191.6" y2="29.4" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="204.0" y1="29.1" x2="199.0" y2="37.8" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="213.4" y1="35.1" x2="210.0" y2="40.1" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="222.3" y1="41.9" x2="215.8" y2="49.6" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="230.5" y1="49.5" x2="219.9" y2="60.1" stroke="#c8a050" stroke-width="2.5"/>
+<line x1="238.1" y1="57.7" x2="230.4" y2="64.2" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="244.9" y1="66.6" x2="239.9" y2="70.0" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="250.9" y1="76.0" x2="242.2" y2="81.0" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="256.0" y1="85.9" x2="250.6" y2="88.4" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="260.3" y1="96.2" x2="250.9" y2="99.6" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="263.6" y1="106.9" x2="257.8" y2="108.4" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="266.1" y1="117.8" x2="256.2" y2="119.5" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="267.5" y1="128.8" x2="261.5" y2="129.4" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="268.0" y1="140.0" x2="248.0" y2="140.0" stroke="#c8a050" stroke-width="2.5"/>
+<line x1="267.5" y1="151.2" x2="261.5" y2="150.6" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="266.1" y1="162.2" x2="256.2" y2="160.5" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="263.6" y1="173.1" x2="257.8" y2="171.6" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="260.3" y1="183.8" x2="250.9" y2="180.4" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="256.0" y1="194.1" x2="250.6" y2="191.6" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="250.9" y1="204.0" x2="242.2" y2="199.0" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="244.9" y1="213.4" x2="239.9" y2="210.0" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="238.1" y1="222.3" x2="230.4" y2="215.8" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="230.5" y1="230.5" x2="219.9" y2="219.9" stroke="#c8a050" stroke-width="2.5"/>
+<line x1="222.3" y1="238.1" x2="215.8" y2="230.4" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="213.4" y1="244.9" x2="210.0" y2="239.9" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="204.0" y1="250.9" x2="199.0" y2="242.2" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="194.1" y1="256.0" x2="191.6" y2="250.6" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="183.8" y1="260.3" x2="180.4" y2="250.9" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="173.1" y1="263.6" x2="171.6" y2="257.8" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="162.2" y1="266.1" x2="160.5" y2="256.2" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="151.2" y1="267.5" x2="150.6" y2="261.5" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="140.0" y1="268.0" x2="140.0" y2="248.0" stroke="#c8a050" stroke-width="2.5"/>
+<line x1="128.8" y1="267.5" x2="129.4" y2="261.5" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="117.8" y1="266.1" x2="119.5" y2="256.2" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="106.9" y1="263.6" x2="108.4" y2="257.8" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="96.2" y1="260.3" x2="99.6" y2="250.9" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="85.9" y1="256.0" x2="88.4" y2="250.6" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="76.0" y1="250.9" x2="81.0" y2="242.2" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="66.6" y1="244.9" x2="70.0" y2="239.9" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="57.7" y1="238.1" x2="64.2" y2="230.4" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="49.5" y1="230.5" x2="60.1" y2="219.9" stroke="#c8a050" stroke-width="2.5"/>
+<line x1="41.9" y1="222.3" x2="49.6" y2="215.8" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="35.1" y1="213.4" x2="40.1" y2="210.0" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="29.1" y1="204.0" x2="37.8" y2="199.0" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="24.0" y1="194.1" x2="29.4" y2="191.6" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="19.7" y1="183.8" x2="29.1" y2="180.4" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="16.4" y1="173.1" x2="22.2" y2="171.6" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="13.9" y1="162.2" x2="23.8" y2="160.5" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="12.5" y1="151.2" x2="18.5" y2="150.6" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="12.0" y1="140.0" x2="32.0" y2="140.0" stroke="#c8a050" stroke-width="2.5"/>
+<line x1="12.5" y1="128.8" x2="18.5" y2="129.4" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="13.9" y1="117.8" x2="23.8" y2="119.5" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="16.4" y1="106.9" x2="22.2" y2="108.4" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="19.7" y1="96.2" x2="29.1" y2="99.6" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="24.0" y1="85.9" x2="29.4" y2="88.4" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="29.1" y1="76.0" x2="37.8" y2="81.0" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="35.1" y1="66.6" x2="40.1" y2="70.0" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="41.9" y1="57.7" x2="49.6" y2="64.2" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="49.5" y1="49.5" x2="60.1" y2="60.1" stroke="#c8a050" stroke-width="2.5"/>
+<line x1="57.7" y1="41.9" x2="64.2" y2="49.6" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="66.6" y1="35.1" x2="70.0" y2="40.1" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="76.0" y1="29.1" x2="81.0" y2="37.8" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="85.9" y1="24.0" x2="88.4" y2="29.4" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="96.2" y1="19.7" x2="99.6" y2="29.1" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="106.9" y1="16.4" x2="108.4" y2="22.2" stroke="#c8a050" stroke-width="0.8"/>
+<line x1="117.8" y1="13.9" x2="119.5" y2="23.8" stroke="#c8a050" stroke-width="1.5"/>
+<line x1="128.8" y1="12.5" x2="129.4" y2="18.5" stroke="#c8a050" stroke-width="0.8"/>
+<text x="190.0" y="53.4" text-anchor="middle" dominant-baseline="middle" fill="#b09050" font-size="8" font-family="serif">30</text>
+<text x="226.6" y="90.0" text-anchor="middle" dominant-baseline="middle" fill="#b09050" font-size="8" font-family="serif">60</text>
+<text x="226.6" y="190.0" text-anchor="middle" dominant-baseline="middle" fill="#b09050" font-size="8" font-family="serif">120</text>
+<text x="190.0" y="226.6" text-anchor="middle" dominant-baseline="middle" fill="#b09050" font-size="8" font-family="serif">150</text>
+<text x="90.0" y="226.6" text-anchor="middle" dominant-baseline="middle" fill="#b09050" font-size="8" font-family="serif">210</text>
+<text x="53.4" y="190.0" text-anchor="middle" dominant-baseline="middle" fill="#b09050" font-size="8" font-family="serif">240</text>
+<text x="53.4" y="90.0" text-anchor="middle" dominant-baseline="middle" fill="#b09050" font-size="8" font-family="serif">300</text>
+<text x="90.0" y="53.4" text-anchor="middle" dominant-baseline="middle" fill="#b09050" font-size="8" font-family="serif">330</text>
+<text x="140.0" y="36.0" text-anchor="middle" dominant-baseline="middle" fill="#f5c842" font-size="16" font-family="serif" font-weight="bold">N</text>
+<text x="244.0" y="140.0" text-anchor="middle" dominant-baseline="middle" fill="#c8a050" font-size="12" font-family="serif" font-weight="bold">E</text>
+<text x="140.0" y="244.0" text-anchor="middle" dominant-baseline="middle" fill="#c8a050" font-size="12" font-family="serif" font-weight="bold">S</text>
+<text x="36.0" y="140.0" text-anchor="middle" dominant-baseline="middle" fill="#c8a050" font-size="12" font-family="serif" font-weight="bold">O</text>
+<text x="212.1" y="67.9" text-anchor="middle" dominant-baseline="middle" fill="#9a8040" font-size="9" font-family="serif">NE</text>
+<text x="212.1" y="212.1" text-anchor="middle" dominant-baseline="middle" fill="#9a8040" font-size="9" font-family="serif">SE</text>
+<text x="67.9" y="212.1" text-anchor="middle" dominant-baseline="middle" fill="#9a8040" font-size="9" font-family="serif">SO</text>
+<text x="67.9" y="67.9" text-anchor="middle" dominant-baseline="middle" fill="#9a8040" font-size="9" font-family="serif">NO</text>
+<polygon points="140,60 144,128 140,134 136,128" fill="#e8d070" opacity="0.9"/>
+<polygon points="140,220 144,152 140,146 136,152" fill="#7a6030" opacity="0.8"/>
+<polygon points="60,140 128,136 134,140 128,144" fill="#7a6030" opacity="0.8"/>
+<polygon points="220,140 152,136 146,140 152,144" fill="#7a6030" opacity="0.8"/>
+<polygon points="83,83 133,133 134,140 128,136" fill="#b09040" opacity="0.5"/>
+<polygon points="197,83 147,133 146,140 152,136" fill="#b09040" opacity="0.5"/>
+<polygon points="83,197 133,147 134,140 128,144" fill="#b09040" opacity="0.5"/>
+<polygon points="197,197 147,147 146,140 152,144" fill="#b09040" opacity="0.5"/>
+<circle cx="140" cy="140" r="8" fill="#2a1a08" stroke="#c8a050" stroke-width="1.5"/>
+<circle cx="140" cy="140" r="3" fill="#f1c40f"/>
+</svg>
+          </div>
+          <!-- Magnetic needle on top that stays fixed pointing North (UP) -->
+          <div id="compass-needle" style="position:absolute; top:50%; left:50%; width:12px; height:74%; transform:translate(-50%, -50%); pointer-events:none; z-index:5;"></div>
+          <!-- Glowing center glass cover -->
+          <div class="compass-glass-shine" style="position:absolute; top:0; left:0; width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.03) 40%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.1) 100%); pointer-events:none; z-index:12;"></div>
+        </div>
+      </div>
+      
+      <!-- Angle display -->
+      <div class="compass-readout" style="text-align:center; margin-top:0.8rem; user-select:none;">
+        <span style="font-family:'Special Elite', cursive; font-size:0.95rem; color:#888;">AZIMUT RÉGLÉ : </span>
+        <span id="compass-angle-val" style="font-family:'VT323', monospace; font-size:2.2rem; color:#ffd700; font-weight:bold; letter-spacing:1px; vertical-align:middle; line-height:1;">0°</span>
+      </div>
+      
+      <div id="compass-success-msg" style="display:none; text-align:center; color:#2ecc71; font-family:'Special Elite', cursive; font-size:0.9rem; margin-top:0.6rem; background:rgba(46, 204, 113, 0.12); padding:6px 12px; border-radius:4px; border:1px dashed rgba(46,204,113,0.3); width:90%; box-sizing:border-box;">
+        ✓ Cap verrouillé — azimut confirmé depuis Tourtoirac.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--  MODAL — MACHINE À ÉCRIRE             -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-machine" class="modal-overlay" onclick="if(event.target === this) closeModal('modal-machine')">
+  <div class="modal-box">
+    <span class="modal-close" onclick="closeModal('modal-machine')">✕</span>
+    <div id="typewriter-paper" tabindex="0"></div>
+    <div id="typewriter-hint">Saisissez le lieu de départ décrypté au clavier pour lancer la transmission...</div>
+  </div>
+</div>
+
 
 <!-- ═══════════════════════════════════════ -->
 <!--  ÉCRAN DE VICTOIRE                     -->
 <!-- ═══════════════════════════════════════ -->
-<div id="victory-screen">
-  <div id="victory-content">
-    <h2>TRANSMISSION REÇUE</h2>
-    <p style="font-family:'VT323',monospace;color:#888;font-size:1rem;">5 AOÛT 1944 — 00h17</p>
-    <div id="timer-display">--:--</div>
-    <p>
-      Le parachutage allié aura lieu cette nuit.<br>
-      Point de chute confirmé : <strong>CUBJAC</strong>, confluent de l'Auvézère.<br><br>
-      Résistants mobilisés. La Libération approche.
-    </p>
-    <p class="quote">« On ne meurt pas pour des idées, on meurt pour des hommes. »<br>— Le Facteur</p>
+<div id="victory-screen" style="display:none; position:fixed; inset:0; background:rgba(10,8,4,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center; padding:20px; perspective:1000px;">
+  
+  <div id="victory-card-inner" style="position:relative; width:min(650px, 95vw); aspect-ratio: 1.48; transform-style:preserve-3d; transition:transform 0.8s ease-in-out;">
+    
+    <!-- Face 1 : Texte et Adresse (Dos de la vraie carte) -->
+    <div id="victory-postcard" onclick="flipCard(event)" style="position:absolute; inset:0; backface-visibility:hidden; background: url('page blanche.png') center/cover; -webkit-mask-image: url('photo cubjac.png'); -webkit-mask-size: cover; mask-image: url('photo cubjac.png'); mask-size: cover; overflow:hidden; display:flex; color:#222; container-type:inline-size; cursor:pointer;">
+      
+      <!-- Moitié gauche : Message -->
+      <div style="flex:1; padding: 5% 4% 4% 5%; display:flex; flex-direction:column; justify-content:space-between; position:relative; z-index:10; border-right: 1px solid rgba(100,80,60,0.3);">
+        <div>
+          <h2 style="font-family:'Special Elite',cursive; font-size:4cqw; margin-top:0; color:#5a3a00; border-bottom:1px solid #5a3a00; padding-bottom:5px;">MISSION ACCOMPLIE</h2>
+          <p style="font-family:'Caveat',cursive; font-size:3.5cqw; line-height:1.4; margin-top:2cqw; font-weight:bold; color:#1a1005;">
+            Bravo, vous avez localisé le lieu du parachutage. Les troupes 1ère et 3ème Port-Marly vont porter main forte à la résistance cet été à Cubjac !
+          </p>
+          <p style="font-family:'Caveat',cursive; font-size:3cqw; line-height:1.4; color:#5a3a00; margin-top:3cqw; font-style:italic;">
+            (Cliquez sur la carte pour la retourner et voir le village au dos)
+          </p>
+        </div>
+        <div style="font-family:'VT323',monospace; color:#888; font-size:2.5cqw;">5 AOÛT 1944 — 00h17</div>
+      </div>
+
+      <!-- Moitié droite : Adresse / Enregistrement -->
+      <div style="flex:0.8; padding: 4%; position:relative; z-index:10; display:flex; flex-direction:column;">
+        <!-- Faux timbre -->
+        <div style="display:flex; justify-content:flex-end; margin-bottom:5%;">
+          <div style="width:7cqw; height:8cqw; border:1px dashed #a09070; background:#e8dcc8; display:flex; align-items:center; justify-content:center; color:#a09070; font-family:'Special Elite',cursive; font-size:1.5cqw;">TIMBRE</div>
+        </div>
+        
+        <!-- Lignes d'adresse transformées en inputs -->
+        <div style="font-family:'Special Elite',cursive; font-size:2.2cqw; color:#3a2a10; margin-bottom:8px; line-height:1.3;">
+          <strong>Attention :</strong> Pour valider le score et les résultats de l'énigme, il faut impérativement inscrire votre nom et prénom ci-dessous.
+        </div>
+        
+        <div style="margin-bottom: 5%;">
+          <div style="border-bottom: 1px solid rgba(100,80,60,0.5); display:flex; align-items:flex-end; padding-bottom:2px;">
+            <span style="font-family:'Special Elite',cursive; font-size:2.2cqw; color:#5a3a00; width:30%;">Prénom :</span>
+            <input type="text" id="victory-prenom" placeholder="Prénom" style="border:none; background:transparent; font-family:'Caveat',cursive; font-size:3.2cqw; color:#1a1005; flex:1; outline:none; font-weight:bold;">
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 10%;">
+          <div style="border-bottom: 1px solid rgba(100,80,60,0.5); display:flex; align-items:flex-end; padding-bottom:2px;">
+            <span style="font-family:'Special Elite',cursive; font-size:2.2cqw; color:#5a3a00; width:30%;">Nom :</span>
+            <input type="text" id="victory-nom" placeholder="Nom" style="border:none; background:transparent; font-family:'Caveat',cursive; font-size:3.2cqw; color:#1a1005; flex:1; outline:none; font-weight:bold;">
+          </div>
+        </div>
+
+        <!-- Bouton Valider -->
+        <button onclick="registerVictory()" style="margin-top:auto; background:transparent; border:2px solid #5a3a00; color:#5a3a00; font-family:'Special Elite',cursive; font-size:2.5cqw; padding:6px 0; cursor:pointer; font-weight:bold; transition:all 0.2s;" onmouseover="this.style.background='#5a3a00'; this.style.color='#f4eedc';" onmouseout="this.style.background='transparent'; this.style.color='#5a3a00';">
+          VALIDER LE RÉSULTAT
+        </button>
+      </div>
+    </div>
+    
+    <!-- Face 2 : Photo de Cubjac (Face avant de la vraie carte) -->
+    <div onclick="flipCard(event)" style="position:absolute; inset:0; backface-visibility:hidden; transform:rotateY(180deg); -webkit-mask-image: url('photo cubjac.png'); -webkit-mask-size: cover; mask-image: url('photo cubjac.png'); mask-size: cover; overflow:hidden; cursor:pointer; background:url('page blanche.png') center/cover;">
+      <img src="photo cubjac.png" style="width:100%; height:100%; object-fit:cover;">
+    </div>
+    
   </div>
 </div>
 
-<!-- BOUTON AIDE -->
-<button id="hint-btn" onclick="showHint()" title="Besoin d'un indice ?">?</button>
+<!-- ═══════════════════════════════════════ -->
+<!--  MODAL — ZOOM SUR LES MESSAGES           -->
+<!-- ═══════════════════════════════════════ -->
+<div id="modal-paper-zoom" class="modal-overlay">
+  <div class="modal-box" id="paper-zoom-box" style="width: min(450px, 90vw); background: url('paper.png') center/cover no-repeat; border-radius: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.95); padding: 2.5rem 2.2rem; color: #000; font-family: 'Special Elite', cursive; text-align: center; position: relative;">
+    <span class="modal-close" onclick="closeModal('modal-paper-zoom')" style="color: #000; border-color: rgba(0,0,0,0.2); top: 10px; right: 10px;">✕</span>
+    <div id="paper-zoom-content" style="font-size: 1.1rem; line-height: 1.6; color: #000;">
+      <!-- Populated dynamically -->
+    </div>
+  </div>
+</div>
+
 
 <!-- ═══════════════════════════════════════ -->
 <!--  SCRIPTS                               -->
 <!-- ═══════════════════════════════════════ -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/main.js"></script>
 <script src="js/admin.js"></script>
