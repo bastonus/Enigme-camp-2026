@@ -1377,69 +1377,48 @@ html, body {
 
 /* ══════════════════════════════════════════
    MODAL SUCCÈS CARTE — RAPPORT F.F.I.
-   (LÈVE DEPUIS LA POSITION DE LA CARTE)
-   ══════════════════════════════════════════ */
-#modal-map-success-paper .modal-box {
+/* ── Rapport de Localisation F.F.I. sur la table ── */
+#obj-rapport-ffi {
+  position: absolute;
+  top: 20%;
+  left: 53%;
+  width: 10.5%;
+  aspect-ratio: 5.4 / 7.2;
+  background: url('../page blanche.png') center/cover no-repeat;
+  border: 1px solid rgba(0,0,0,0.15);
+  box-shadow: -3px 5px 8px rgba(0,0,0,0.6);
+  padding: 1.2cqw;
+  font-family: 'Special Elite', cursive;
+  color: #1a0a00;
+  transform: rotate(8deg);
+  z-index: 12; /* Au-dessus de la carte qui a z-index: 10 */
+  cursor: pointer;
+  transition: transform 0.55s cubic-bezier(0.25, 1, 0.2, 1),
+              width 0.55s cubic-bezier(0.25, 1, 0.2, 1),
+              top 0.55s cubic-bezier(0.25, 1, 0.2, 1),
+              left 0.55s cubic-bezier(0.25, 1, 0.2, 1),
+              padding 0.55s cubic-bezier(0.25, 1, 0.2, 1),
+              box-shadow 0.3s;
+  container-type: inline-size;
+  display: none; /* Apparaît après la résolution de la carte */
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+#obj-rapport-ffi:hover:not(.zoomed) {
+  transform: rotate(5deg) scale(1.05);
+  box-shadow: -5px 8px 12px rgba(0,0,0,0.7);
+}
+
+#obj-rapport-ffi.zoomed {
+  position: fixed;
   width: min(540px, 92vw);
   height: min(720px, 85vh);
-  background: url('../page blanche.png') center/cover no-repeat;
-  color: #1a0a00;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-0.5deg);
+  z-index: 550; /* Au-dessus du reste */
   padding: 3.5rem 4rem;
   box-shadow: 0 15px 45px rgba(0,0,0,0.9);
-  border: 1px solid rgba(0,0,0,0.15);
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  transform: rotate(-0.5deg);
-  font-family: 'Special Elite', cursive;
-  text-align: left;
 }
 
-#modal-map-success-paper.open .modal-box {
-  animation: zoomInSuccessPaper 0.58s cubic-bezier(0.25, 1, 0.2, 1) forwards;
-  transform-origin: center center;
-}
-
-#modal-map-success-paper.closing .modal-box {
-  animation: zoomOutSuccessPaper 0.58s cubic-bezier(0.25, 1, 0.2, 1) forwards;
-  transform-origin: center center;
-}
-
-@keyframes zoomInSuccessPaper {
-  0% {
-    position: fixed;
-    top: 6.95%;
-    left: 29.98%;
-    width: 38.01%;
-    transform: translate(0, 0) scale(0.2) rotate(4deg);
-    opacity: 0;
-  }
-  100% {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: min(540px, 92vw);
-    transform: translate(-50%, -50%) scale(1) rotate(-0.5deg);
-    opacity: 1;
-  }
-}
-
-@keyframes zoomOutSuccessPaper {
-  0% {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: min(540px, 92vw);
-    transform: translate(-50%, -50%) scale(1) rotate(-0.5deg);
-    opacity: 1;
-  }
-  100% {
-    position: fixed;
-    top: 6.95%;
-    left: 29.98%;
-    width: 38.01%;
-    transform: translate(0, 0) scale(0.2) rotate(4deg);
-    opacity: 0;
-  }
-}

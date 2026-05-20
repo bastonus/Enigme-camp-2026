@@ -103,12 +103,31 @@ Date : 4 août 1944
   <div id="obj-carte" class="obj" onclick="openMapModal()" title="Carte d'état-major IGN 1950 — cliquez pour agrandir"></div>
 
   <!-- 3b. Rapport F.F.I. physique sur la table (apparaît après succès carte) -->
-  <div id="obj-rapport-ffi" class="obj" title="Rapport de Localisation F.F.I. — Cliquez pour réouvrir" onclick="openModal('modal-map-success-paper')" style="display:none; position:absolute; top:20%; left:53%; width:10.5cqw; height:14cqw; background:url('page blanche.png') center/cover; border:1px solid rgba(0,0,0,0.15); box-shadow:-3px 5px 8px rgba(0,0,0,0.6); padding:0.8cqw; font-family:'Special Elite',cursive; font-size:0.75cqw; color:#1a0a00; transform:rotate(8deg); z-index:4; cursor:pointer; transition:transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='rotate(5deg) scale(1.05)'; this.style.boxShadow='-5px 8px 12px rgba(0,0,0,0.7)';" onmouseout="this.style.transform='rotate(8deg)'; this.style.boxShadow='-3px 5px 8px rgba(0,0,0,0.6)';">
-    <div style="border-bottom:1px solid #000; font-weight:bold; font-size:0.85cqw; margin-bottom:0.4cqw; text-align:left;">RAPPORT F.F.I.</div>
-    <div style="font-size:0.65cqw; text-align:left; line-height:1.2; opacity:0.8;">
-      CIBLE : CUBJAC<br>
-      TRANSMISSION REQ.<br>
-      TAPER EN MORSE...
+  <div id="obj-rapport-ffi" class="obj" title="Rapport de Localisation F.F.I. — Cliquez pour lire" onclick="toggleRapportFfiZoom()">
+    <div style="font-weight: bold; font-size: 4.2cqw; text-align: left; margin-bottom: 2cqw; text-transform: uppercase; border-bottom: 0.3cqw solid #000; padding-bottom: 1.2cqw;">
+      RAPPORT DE LOCALISATION — F.F.I.
+    </div>
+    
+    <p style="font-size: 3.1cqw; line-height: 1.45; margin-bottom: 2cqw;">
+      <strong>ZONE DE PARACHUTAGE IDENTIFIÉE : CUBJAC</strong>
+    </p>
+    
+    <p style="font-size: 2.8cqw; line-height: 1.45; margin-bottom: 2cqw; font-style: italic;">
+      Grâce aux recoupements de l'azimut 320° depuis Montignac, la cible de l'embuscade et du parachutage allié a été précisément géolocalisée sur la commune de Cubjac.
+    </p>
+    
+    <p style="font-size: 2.8cqw; line-height: 1.45; margin-bottom: 2cqw; font-weight: bold;">
+      Éclaireurs de la Résistance, la cible est verrouillée ! 
+      Pour déclencher l'assaut et sécuriser le parachutage d'armes, vous devez immédiatement transmettre cette position en code Morse au lieutenant-colonel britannique Tommy Macpherson ("l'Écossais") de la section de liaison alliée.
+    </p>
+    
+    <div style="border-top: 0.25cqw dashed #000; margin-top: 2.2cqw; padding-top: 2cqw; font-size: 2.8cqw; font-weight: bold; background: rgba(0,0,0,0.03); padding: 2cqw; border-radius: 0.4cqw;">
+      <strong style="color: #8c1c1c;">ORDRE DE TRANSMISSION :</strong><br>
+      Utilisez la clé télégraphique et tapez le mot <span style="font-size: 3.2cqw; border-bottom: 0.3cqw solid #8c1c1c;">CUBJAC</span> en code Morse pour valider définitivement la réussite de l'opération.
+    </div>
+    
+    <div style="text-align: right; margin-top: 3cqw; font-size: 2.6cqw; font-weight: bold; opacity: 0.8;">
+      — WHISKY, P.C. Périgord
     </div>
   </div>
 
@@ -184,6 +203,8 @@ Date : 4 août 1944
   </div>
   <!-- Fond sombre quand le carnet est zoomé -->
   <div id="carnet-backdrop" onclick="toggleCarnetZoom()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:490;"></div>
+  <!-- Fond sombre quand le rapport FFI est zoomé -->
+  <div id="rapport-ffi-backdrop" onclick="toggleRapportFfiZoom()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:490;"></div>
 
   <!-- 8b. Machine à écrire -->
   <img id="obj-machine" class="obj" src="img/machine_ecrire.png" alt="Machine à écrire Remington"
@@ -573,41 +594,6 @@ Date : 4 août 1944
     <span class="modal-close" onclick="closeModal('modal-paper-zoom')" style="color: #000; border-color: rgba(0,0,0,0.2); top: 10px; right: 10px;">✕</span>
     <div id="paper-zoom-content" style="font-size: 1.1rem; line-height: 1.6; color: #000;">
       <!-- Populated dynamically -->
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════ -->
-<!--  MODAL — PARACHUTAGE IDENTIFIÉ (CARTE)   -->
-<!-- ═══════════════════════════════════════ -->
-<div id="modal-map-success-paper" class="modal-overlay" onclick="if(event.target === this) closeModal('modal-map-success-paper')">
-  <div class="modal-box">
-    <span class="modal-close" onclick="closeModal('modal-map-success-paper')" style="color: #000; border-color: rgba(0,0,0,0.2); top: 15px; right: 15px;">✕</span>
-    
-    <div style="font-weight: bold; font-size: 1.25rem; text-align: left; margin-bottom: 1.2rem; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 0.5rem;">
-      RAPPORT DE LOCALISATION — F.F.I.
-    </div>
-    
-    <p style="font-size: 1.05rem; line-height: 1.5; margin-bottom: 1rem;">
-      <strong>ZONE DE PARACHUTAGE IDENTIFIÉE : CUBJAC</strong>
-    </p>
-    
-    <p style="font-size: 1rem; line-height: 1.5; margin-bottom: 1rem; font-style: italic;">
-      Grâce aux recoupements de l'azimut 320° depuis Montignac, la cible de l'embuscade et du parachutage allié a été précisément géolocalisée sur la commune de Cubjac.
-    </p>
-    
-    <p style="font-size: 1rem; line-height: 1.5; margin-bottom: 1rem; font-weight: bold;">
-      Éclaireurs de la Résistance, la cible est verrouillée ! 
-      Pour déclencher l'assaut et sécuriser le parachutage d'armes, vous devez immédiatement transmettre cette position en code Morse au lieutenant-colonel britannique Tommy Macpherson ("l'Écossais") de la section de liaison alliée.
-    </p>
-    
-    <div style="border-top: 1.5px dashed #000; margin-top: 1rem; padding-top: 1rem; font-size: 1rem; font-weight: bold; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 2px;">
-      <strong style="color: #8c1c1c;">ORDRE DE TRANSMISSION :</strong><br>
-      Utilisez la clé télégraphique et tapez le mot <span style="font-size: 1.2rem; border-bottom: 2px solid #8c1c1c;">CUBJAC</span> en code Morse pour valider définitivement la réussite de l'opération.
-    </div>
-    
-    <div style="text-align: right; margin-top: 1.5rem; font-size: 0.9rem; font-weight: bold; opacity: 0.8;">
-      — WHISKY, P.C. Périgord
     </div>
   </div>
 </div>

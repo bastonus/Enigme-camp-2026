@@ -14,6 +14,7 @@ const State = {
   radioOn: false,
   radioTuned: false,
   radioActivatedOnce: false,
+  bbcSequenceActive: false,
   morseDecoded: false,
   altitudeFound: false,
   cipherComplete: true, // true par défaut pour déchiffrer en direct
@@ -214,22 +215,9 @@ function closeModal(id) {
       }
       setRadioIlluminated(true);
       
-      if (!State.bbcVoicePlayed) {
-        if (radioEl) radioEl.classList.add('disabled');
-        updateRadioStatus('🔊 RÉCEPTION RÉUSSIE — ÉCOUTEZ LE MESSAGE…');
-        
-        State.radioActivatedOnce = true;
-        AudioManager.makeRadioLondresVoiceSingle(() => {
-          if (radioEl) radioEl.classList.remove('disabled');
-          if (!State.radioOn) return;
-          State.bbcVoicePlayed = true;
-          updateRadioStatus('🔊 BBC LONDRES — EN COURS DE RÉCEPTION…');
-          audioMorseSequence();
-        });
-      } else {
-        if (radioEl) radioEl.classList.remove('disabled');
-        updateRadioStatus('🔊 BBC LONDRES — EN COURS DE RÉCEPTION…');
-        audioMorseSequence();
+      State.radioActivatedOnce = true;
+      if (!State.bbcSequenceActive) {
+        playBbcSequence();
       }
     } else {
       // Not tuned or radio is OFF: keep playing background stations/static if ON
@@ -464,19 +452,19 @@ let tunerTunedTimer = null;
 function openRadioTuner() {
   openModal('modal-radio-tuner');
   
-  // Stop and clean up any ongoing Morse sequence states only if not solved yet (keeps Morse on airwaves if solved)
-  if (!State.bbcVoicePlayed) {
-    if (morseAudioCtx) {
-      try { morseAudioCtx.close(); } catch(err) {}
-      morseAudioCtx = null;
-    }
-    if (morseSignalInterval) {
-      clearInterval(morseSignalInterval);
-      morseSignalInterval = null;
-    }
-    activeRadioTimeouts.forEach(tId => clearTimeout(tId));
-    activeRadioTimeouts = [];
+  // Stop and clean up any ongoing Morse sequence / BBC loop sequence
+  if (morseAudioCtx) {
+    try { morseAudioCtx.close(); } catch(err) {}
+    morseAudioCtx = null;
   }
+  if (morseSignalInterval) {
+    clearInterval(morseSignalInterval);
+    morseSignalInterval = null;
+  }
+  activeRadioTimeouts.forEach(tId => clearTimeout(tId));
+  activeRadioTimeouts = [];
+  State.bbcSequenceActive = false;
+  AudioManager.stopRadioLondresVoice();
 
   // Make the desk radio show it is ON
   const radioEl = document.getElementById('obj-radio');
@@ -513,11 +501,7 @@ function openRadioTuner() {
   
   // Start static and voice for audio feedback
   AudioManager.startStatic();
-  if (!State.bbcVoicePlayed) {
-    AudioManager.startRadioLondresVoice(true);
-  } else if (!morseAudioCtx) {
-    audioMorseSequence();
-  }
+  AudioManager.startRadioLondresVoice(true);
   
   // Start historical stations in background
   AudioManager.updateStationVolumes(State.radioFrequency || 40.0, true);
@@ -560,7 +544,7 @@ function toggleTunerPower() {
     setRadioIlluminated(false);
     updateRadioStatus('[ RADIO ÉTEINTE ]');
     
-    // Stop Morse
+    // Stop Morse and reset loop state
     if (morseAudioCtx) {
       try { morseAudioCtx.close(); } catch(err) {}
       morseAudioCtx = null;
@@ -571,6 +555,7 @@ function toggleTunerPower() {
     }
     activeRadioTimeouts.forEach(tId => clearTimeout(tId));
     activeRadioTimeouts = [];
+    State.bbcSequenceActive = false;
   } else {
     // Turn ON
     State.radioOn = true;
@@ -592,12 +577,15 @@ function toggleTunerPower() {
     setRadioIlluminated(true);
     updateRadioStatus('[ FRITURE… RÉGLAGE DE LA FRÉQUENCE ]');
     
-    // Start static and voice for audio feedback
+    // Start static
     AudioManager.startStatic();
-    if (!State.bbcVoicePlayed) {
+    
+    // Check tuning
+    const isTuned = Math.abs((State.radioFrequency || 0) - 58.7) < 0.15;
+    if (isTuned) {
+      playBbcSequence();
+    } else {
       AudioManager.startRadioLondresVoice(true);
-    } else if (!morseAudioCtx) {
-      audioMorseSequence();
     }
     
     // Start historical stations in background
@@ -670,7 +658,37 @@ function updateMorseSignalProperties() {
   }
 }
 
-function audioMorseSequence() {
+function playBbcSequence() {
+  if (!State.radioOn) {
+    State.bbcSequenceActive = false;
+    return;
+  }
+  State.bbcSequenceActive = true;
+  
+  updateRadioStatus('🔊 BBC LONDRES — MESSAGE VOCAL…');
+  
+  AudioManager.stopRadioLondresVoice();
+  // Play the Radio Londres voice once
+  AudioManager.startRadioLondresVoice(false, () => {
+    if (!State.radioOn) {
+      State.bbcSequenceActive = false;
+      return;
+    }
+    
+    updateRadioStatus('🔊 BBC LONDRES — TRANSMISSION MORSE…');
+    // Once finished, play the Morse sequence once
+    audioMorseSequence(() => {
+      if (!State.radioOn) {
+        State.bbcSequenceActive = false;
+        return;
+      }
+      // Once Morse is finished, restart the cycle
+      playBbcSequence();
+    });
+  });
+}
+
+function audioMorseSequence(onEnded) {
   activeRadioTimeouts.forEach(tId => clearTimeout(tId));
   activeRadioTimeouts = [];
   
@@ -693,7 +711,7 @@ function audioMorseSequence() {
   // Update desk radio status text
   const isTuned = Math.abs((State.radioFrequency || 0) - 58.7) < 0.15;
   if (isTuned) {
-    updateRadioStatus('🔊 BBC LONDRES — EN COURS DE RÉCEPTION…');
+    updateRadioStatus('🔊 BBC LONDRES — TRANSMISSION MORSE…');
   }
 
   const DOT = 240, DASH = 720, GAP = 240, LETTER_GAP = 720, WORD_GAP = 1680;
@@ -753,7 +771,20 @@ function audioMorseSequence() {
   const finishTimeout = setTimeout(() => {
     if (!State.radioOn) return;
     State.morseDecoded = true;
-    audioMorseSequence(); // Loop the morse sequence
+    
+    // Stop the Morse audio context and signal interval
+    if (morseAudioCtx) {
+      try { morseAudioCtx.close(); } catch(err) {}
+      morseAudioCtx = null;
+    }
+    if (morseSignalInterval) {
+      clearInterval(morseSignalInterval);
+      morseSignalInterval = null;
+    }
+
+    if (typeof onEnded === 'function') {
+      onEnded();
+    }
   }, totalDuration);
   activeRadioTimeouts.push(finishTimeout);
 }
@@ -1351,6 +1382,23 @@ function toggleCarnetZoom() {
     backdrop.style.display = 'none';
   }
 }
+
+/* Zoom de lisibilité pour le rapport F.F.I. */
+function toggleRapportFfiZoom() {
+  const wrapper = document.getElementById('obj-rapport-ffi');
+  const backdrop = document.getElementById('rapport-ffi-backdrop');
+  if (!wrapper || !backdrop) return;
+
+  AudioManager.paperRustle();
+
+  const isZoomed = wrapper.classList.toggle('zoomed');
+  if (isZoomed) {
+    backdrop.style.display = 'block';
+  } else {
+    backdrop.style.display = 'none';
+  }
+}
+
 
 /* ──────────────────────────────────────
    LOGIQUE DE LA MACHINE À ÉCRIRE (TYPING ON PORTRAIT SHEET)
@@ -2267,13 +2315,12 @@ function triggerMapSuccessAnimation() {
       clearInterval(interval);
       highlightCubjacMarker();
       
-      // Ouvrir le rapport papier de localisation F.F.I. après que le tracé vert soit terminé et mis en valeur
+      // Rendre visible le rapport papier de localisation F.F.I. sur la table après la fin de l'animation
       setTimeout(() => {
         const rapportFfi = document.getElementById('obj-rapport-ffi');
         if (rapportFfi) {
           rapportFfi.style.display = 'block';
         }
-        openModal('modal-map-success-paper');
       }, 1000);
     }
   }, 25);
