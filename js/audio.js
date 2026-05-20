@@ -287,7 +287,7 @@ const AudioManager = (() => {
   const stations = [
     {
       freq: 41.0,
-      file: 'La Radio française (1936-1939).mp3',
+      file: 'audio/La Radio française (1936-1939).mp3',
       audio: null,
       source: null,
       filter: null,
@@ -303,7 +303,7 @@ const AudioManager = (() => {
     },
     {
       freq: 45.0,
-      file: 'la grand vadrouille (  marche hongroise)  1966  georges auric.mp3',
+      file: 'audio/la grand vadrouille (  marche hongroise)  1966  georges auric.mp3',
       audio: null,
       source: null,
       filter: null,
@@ -311,7 +311,7 @@ const AudioManager = (() => {
     },
     {
       freq: 47.0,
-      file: 'La Grande Vadrouille - Tea For Two.mp3',
+      file: 'audio/La Grande Vadrouille - Tea For Two.mp3',
       audio: null,
       source: null,
       filter: null,
@@ -319,7 +319,7 @@ const AudioManager = (() => {
     },
     {
       freq: 49.0,
-      file: '17 juin 1940 - Maréchal Pétain - Je fais à la France le don de ma personne - Armistice.mp3',
+      file: 'audio/17 juin 1940 - Maréchal Pétain - Je fais à la France le don de ma personne - Armistice.mp3',
       audio: null,
       source: null,
       filter: null,
@@ -327,7 +327,7 @@ const AudioManager = (() => {
     },
     {
       freq: 51.0,
-      file: 'Le vrai visage de Mgr Lefebvre.mp3',
+      file: 'audio/Le vrai visage de Mgr Lefebvre.mp3',
       audio: null,
       source: null,
       filter: null,
@@ -335,7 +335,7 @@ const AudioManager = (() => {
     },
     {
       freq: 53.0,
-      file: 'Nini Peau DChien.mp3',
+      file: 'audio/Nini Peau DChien.mp3',
       audio: null,
       source: null,
       filter: null,
@@ -343,7 +343,7 @@ const AudioManager = (() => {
     },
     {
       freq: 55.0,
-      file: 'Fernandel  Jai un beau chapeau  1946.mp3',
+      file: 'audio/Fernandel  Jai un beau chapeau  1946.mp3',
       audio: null,
       source: null,
       filter: null,
@@ -505,7 +505,7 @@ const AudioManager = (() => {
 
   function playChantDesPartisans() {
     if (!victoryChantAudio) {
-      victoryChantAudio = new Audio('LE CHANT DES PARTISANS.mp3');
+      victoryChantAudio = new Audio('audio/LE CHANT DES PARTISANS.mp3');
       victoryChantAudio.volume = 0.85;
       victoryChantAudio.loop = true;
     }
@@ -516,6 +516,29 @@ const AudioManager = (() => {
   function stopChantDesPartisans() {
     if (victoryChantAudio) {
       victoryChantAudio.pause();
+    }
+  }
+
+  /* ── Easter Egg de réussite (Maréchal nous voilà) ── */
+  let easterEggAudio = null;
+  let isEasterEggActive = false;
+
+  function toggleEasterEggMusic() {
+    if (!easterEggAudio) {
+      easterEggAudio = new Audio('audio/André Dassary - Maréchal, nous voilà!.mp3');
+      easterEggAudio.volume = 0.85;
+      easterEggAudio.loop = true;
+    }
+
+    if (!isEasterEggActive) {
+      stopChantDesPartisans();
+      easterEggAudio.currentTime = 0;
+      easterEggAudio.play().catch(e => console.warn('Easter egg play blocked:', e));
+      isEasterEggActive = true;
+    } else {
+      easterEggAudio.pause();
+      playChantDesPartisans();
+      isEasterEggActive = false;
     }
   }
 
@@ -541,7 +564,7 @@ const AudioManager = (() => {
     });
   }
 
-  const glassBreakingAudio = new Audio('glass breaking.wav');
+  const glassBreakingAudio = new Audio('audio/glass breaking.wav');
 
   /* ── Bruit de vitre brisée (cadre photo) ── */
   function playGlassBreaking() {
@@ -550,6 +573,6 @@ const AudioManager = (() => {
     glassBreakingAudio.play().catch(e => console.warn('Glass breaking audio play blocked:', e));
   }
 
-  return { dot, dash, startTone, stopTone, typewriterKey, startIntroTypewriter, stopIntroTypewriter, startStatic, stopStatic, paperRustle, victory, clink, stamp, lightCandle, blowOutCandle, startRadioLondresVoice, makeRadioLondresVoiceSingle, stopRadioLondresVoice, setStaticVolume, setVoiceVolume, updateStationVolumes, beep, playChantDesPartisans, stopChantDesPartisans, playGunshot, playGlassBreaking };
+  return { dot, dash, startTone, stopTone, typewriterKey, startIntroTypewriter, stopIntroTypewriter, startStatic, stopStatic, paperRustle, victory, clink, stamp, lightCandle, blowOutCandle, startRadioLondresVoice, makeRadioLondresVoiceSingle, stopRadioLondresVoice, setStaticVolume, setVoiceVolume, updateStationVolumes, beep, playChantDesPartisans, stopChantDesPartisans, playGunshot, playGlassBreaking, toggleEasterEggMusic };
 })();
 

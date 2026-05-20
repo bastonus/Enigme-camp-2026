@@ -851,7 +851,7 @@ html, body {
 #modal-machine .modal-box {
   width: min(600px, 92vw);
   height: min(780px, 85vh);
-  background: url('../page blanche.png') center/cover no-repeat;
+  background: url('../img/page blanche.png') center/cover no-repeat;
   color: #1a0a00;
   padding: 3.5rem 4.5rem;
   box-shadow: 0 15px 45px rgba(0,0,0,0.9);
@@ -1411,7 +1411,7 @@ html, body {
   left: 40%;
   width: 14.5%;
   aspect-ratio: 5.4 / 7.2;
-  background: url('../page blanche.png') center/cover no-repeat;
+  background: url('../img/page blanche.png') center/cover no-repeat;
   border: 1px solid rgba(0,0,0,0.15);
   padding: 1.2cqw;
   font-family: 'Special Elite', cursive;

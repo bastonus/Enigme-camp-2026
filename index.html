@@ -98,7 +98,7 @@ DATE : <span id="dynamic-teletype-date">20 MAI 1944</span> — 21H30
 
   <!-- Étiquette — apparaît SOUS le cigare après roulement vers la droite -->
   <div id="cigar-label" style="position: absolute; top: 66.3%; left: 22.1%; width: 12vw; height: 12vw; pointer-events: none; z-index: 14; transform: rotate(-12deg) translateY(-8vw); transform-origin: 50% 50%;">
-    <div class="cigar-tag-inner" onclick="zoomPaper('cigar')" style="position: absolute; top: 4.0vw; left: 8.2vw; width: 9.0vw; height: 2.0vw; background: #163e20 url('paper.png') center/cover; background-blend-mode: multiply; box-shadow: 1px 2px 6px rgba(0,0,0,0.55); border: 2px double #d4af37; border-radius: 1px; font-family: 'Cinzel', serif; color: #ffffff; padding: 0.1vw 0.3vw; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; pointer-events: auto; clip-path: inset(0 100% 0 0); transition: clip-path 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.3s;">
+    <div class="cigar-tag-inner" onclick="zoomPaper('cigar')" style="position: absolute; top: 4.0vw; left: 8.2vw; width: 9.0vw; height: 2.0vw; background: #163e20 url('img/paper.png') center/cover; background-blend-mode: multiply; box-shadow: 1px 2px 6px rgba(0,0,0,0.55); border: 2px double #d4af37; border-radius: 1px; font-family: 'Cinzel', serif; color: #ffffff; padding: 0.1vw 0.3vw; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; pointer-events: auto; clip-path: inset(0 100% 0 0); transition: clip-path 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.3s;">
       <div style="font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.58vw; letter-spacing: 0.16em; line-height: 1.1; text-transform: uppercase; color: #ffffff; text-shadow: 0px 1px 2px rgba(0,0,0,0.5);">RADIO LONDRES</div>
       <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-style: italic; font-size: 0.68vw; letter-spacing: 0.05em; line-height: 1.1; margin-top: 0.05vw; color: #f5e9c8; text-shadow: 0px 1px 2px rgba(0,0,0,0.5);">58.7 MHz</div>
     </div>
@@ -140,7 +140,7 @@ DATE : <span id="dynamic-teletype-date">20 MAI 1944</span> — 21H30
   <!-- 5. Luger P08 -->
   <div id="luger-wrapper" class="obj" onclick="slideLuger()" title="Un Luger posé sur quelque chose…">
     <!-- Tache de sang placée en dessous du pistolet -->
-    <img id="luger-stain" src="phosphorescent.png" alt="Tache de sang" draggable="false">
+    <img id="luger-stain" src="img/phosphorescent.png" alt="Tache de sang" draggable="false">
 
     <img id="obj-luger" src="img/luger.png" alt="Luger P08" draggable="false" style="width:100%; height:100%; display:block;">
     
@@ -241,7 +241,7 @@ DATE : <span id="dynamic-teletype-date">20 MAI 1944</span> — 21H30
 
   
   <!-- Papier caché sous la photo de Roland Grandou, calé au z-index 13 -->
-  <div id="photo-paper" onclick="zoomPaper('photo')" style="position:absolute; top:49%; left:-3%; opacity:0; filter:brightness(0.2) contrast(0.8) sepia(0.65) hue-rotate(-12deg) drop-shadow(1px 2px 4px rgba(0,0,0,0.95)); z-index:13; pointer-events:none; transition:transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.7s ease, filter 0.7s ease; transform: rotate(-4deg) scale(0.92); width:17vw; padding:1.2rem 1rem; background:url('paper.png') center/cover no-repeat; box-shadow:2px 4px 8px rgba(0,0,0,0.5); border-radius:1px; font-family:'Special Elite',cursive; color:#000; font-size:0.8rem; line-height:1.2; text-align:left; cursor:pointer;">
+  <div id="photo-paper" onclick="zoomPaper('photo')" style="position:absolute; top:49%; left:-3%; opacity:0; filter:brightness(0.2) contrast(0.8) sepia(0.65) hue-rotate(-12deg) drop-shadow(1px 2px 4px rgba(0,0,0,0.95)); z-index:13; pointer-events:none; transition:transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.7s ease, filter 0.7s ease; transform: rotate(-4deg) scale(0.92); width:17vw; padding:1.2rem 1rem; background:url('img/paper.png') center/cover no-repeat; box-shadow:2px 4px 8px rgba(0,0,0,0.5); border-radius:1px; font-family:'Special Elite',cursive; color:#000; font-size:0.8rem; line-height:1.2; text-align:left; cursor:pointer;">
     <div style="font-weight:bold; font-size:0.8rem; text-align:left; margin-bottom:0.3rem;">R. GRANDOU</div>
     <div style="border-bottom:1px solid #000; margin-bottom:0.4rem;"></div>
     <div style="font-size:0.6rem; line-height:1.3;">
@@ -542,7 +542,7 @@ DATE : <span id="dynamic-teletype-date">20 MAI 1944</span> — 21H30
   <div id="victory-card-inner" style="position:relative; width:min(650px, 95vw); aspect-ratio: 1.48; transform-style:preserve-3d; transition:transform 0.8s ease-in-out;">
     
     <!-- Face 1 : Texte et Adresse (Dos de la vraie carte) -->
-    <div id="victory-postcard" onclick="flipCard(event)" style="position:absolute; inset:0; backface-visibility:hidden; background: url('page blanche.png') center/cover; -webkit-mask-image: url('photo cubjac.png'); -webkit-mask-size: cover; mask-image: url('photo cubjac.png'); mask-size: cover; overflow:hidden; display:flex; color:#222; container-type:inline-size; cursor:pointer;">
+    <div id="victory-postcard" onclick="flipCard(event)" style="position:absolute; inset:0; backface-visibility:hidden; background: url('img/page blanche.png') center/cover; -webkit-mask-image: url('img/photo cubjac.png'); -webkit-mask-size: cover; mask-image: url('img/photo cubjac.png'); mask-size: cover; overflow:hidden; display:flex; color:#222; container-type:inline-size; cursor:pointer;">
       
       <!-- Moitié gauche : Message -->
       <div style="flex:1; padding: 5% 4% 4% 5%; display:flex; flex-direction:column; justify-content:space-between; position:relative; z-index:10; border-right: 1px solid rgba(100,80,60,0.3);">
@@ -562,7 +562,7 @@ DATE : <span id="dynamic-teletype-date">20 MAI 1944</span> — 21H30
       <div style="flex:0.8; padding: 4%; position:relative; z-index:10; display:flex; flex-direction:column;">
         <!-- Timbre Historique -->
         <div style="display:flex; justify-content:flex-end; margin-bottom:2%; margin-top:-2%;">
-          <img src="timbre.png" alt="Timbre historique" style="width:14cqw; height:16.5cqw; object-fit:contain; filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.4)); transform: rotate(-3deg); border-radius: 1px; cursor: pointer; transition: transform 0.3s ease;" onmouseover="this.style.transform='rotate(1deg) scale(1.05)'" onmouseout="this.style.transform='rotate(-3deg)'" onerror="this.onerror=null; this.src='timbre.jpg';">
+          <img src="img/timbre.png" alt="Timbre historique" style="width:14cqw; height:16.5cqw; object-fit:contain; filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.4)); transform: rotate(-3deg); border-radius: 1px; cursor: pointer; transition: transform 0.3s ease;" onmouseover="this.style.transform='rotate(1deg) scale(1.05)'" onmouseout="this.style.transform='rotate(-3deg)'" onerror="this.onerror=null; this.src='img/timbre.jpg';" onclick="event.stopPropagation(); AudioManager.toggleEasterEggMusic();">
         </div>
         <!-- Lignes d'adresse transformées en inputs -->
         <div style="font-family:'Special Elite',cursive; font-size:2.2cqw; color:#3a2a10; margin-bottom:8px; line-height:1.3;">
@@ -591,8 +591,8 @@ DATE : <span id="dynamic-teletype-date">20 MAI 1944</span> — 21H30
     </div>
     
     <!-- Face 2 : Photo de Cubjac (Face avant de la vraie carte) -->
-    <div onclick="flipCard(event)" style="position:absolute; inset:0; backface-visibility:hidden; transform:rotateY(180deg); -webkit-mask-image: url('photo cubjac.png'); -webkit-mask-size: cover; mask-image: url('photo cubjac.png'); mask-size: cover; overflow:hidden; cursor:pointer; background:url('page blanche.png') center/cover;">
-      <img src="photo cubjac.png" style="width:100%; height:100%; object-fit:cover;">
+    <div onclick="flipCard(event)" style="position:absolute; inset:0; backface-visibility:hidden; transform:rotateY(180deg); -webkit-mask-image: url('img/photo cubjac.png'); -webkit-mask-size: cover; mask-image: url('img/photo cubjac.png'); mask-size: cover; overflow:hidden; cursor:pointer; background:url('img/page blanche.png') center/cover;">
+      <img src="img/photo cubjac.png" style="width:100%; height:100%; object-fit:cover;">
     </div>
     
   </div>
@@ -602,7 +602,7 @@ DATE : <span id="dynamic-teletype-date">20 MAI 1944</span> — 21H30
 <!--  MODAL — ZOOM SUR LES MESSAGES           -->
 <!-- ═══════════════════════════════════════ -->
 <div id="modal-paper-zoom" class="modal-overlay">
-  <div class="modal-box" id="paper-zoom-box" style="width: min(450px, 90vw); background: url('paper.png') center/cover no-repeat; border-radius: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.95); padding: 2.5rem 2.2rem; color: #000; font-family: 'Special Elite', cursive; text-align: left; position: relative;">
+  <div class="modal-box" id="paper-zoom-box" style="width: min(450px, 90vw); background: url('img/paper.png') center/cover no-repeat; border-radius: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.95); padding: 2.5rem 2.2rem; color: #000; font-family: 'Special Elite', cursive; text-align: left; position: relative;">
     <span class="modal-close" onclick="closeModal('modal-paper-zoom')" style="color: #000; border-color: rgba(0,0,0,0.2); top: 10px; right: 10px;">✕</span>
     <div id="paper-zoom-content" style="font-size: 1.1rem; line-height: 1.6; color: #000;">
       <!-- Populated dynamically -->

@@ -1408,7 +1408,7 @@ function zoomPaper(paperId) {
   if (!contentEl) return;
   
   if (boxEl) {
-    boxEl.style.background = "url('paper.png') center/cover no-repeat";
+    boxEl.style.background = "url('img/paper.png') center/cover no-repeat";
     boxEl.style.backgroundBlendMode = "normal";
     boxEl.style.border = "none";
     boxEl.style.color = "#000";
@@ -1427,7 +1427,7 @@ function zoomPaper(paperId) {
   switch(paperId) {
     case 'cigar':
       if (boxEl) {
-        boxEl.style.background = "#163e20 url('paper.png') center/cover";
+        boxEl.style.background = "#163e20 url('img/paper.png') center/cover";
         boxEl.style.backgroundBlendMode = "multiply";
         boxEl.style.border = "6px double #d4af37";
         boxEl.style.aspectRatio = "auto";
@@ -1457,7 +1457,7 @@ function zoomPaper(paperId) {
       break;
     case 'photo':
       html = `
-        <div style="font-family: 'Special Elite', cursive; font-size: 1.05rem; line-height: 1.45; color: #000; background: url('paper.png') center/cover; padding: 1.5rem; border: 2px solid #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.15); text-align: left;">
+        <div style="font-family: 'Special Elite', cursive; font-size: 1.05rem; line-height: 1.45; color: #000; background: url('img/paper.png') center/cover; padding: 1.5rem; border: 2px solid #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.15); text-align: left;">
           <div style="font-weight: bold; font-size: 1.25rem; text-align: left; margin-bottom: 0.8rem; text-transform: uppercase; color: #000; border-bottom: 2px solid #000; padding-bottom: 0.4rem;">
             NOTE CONFIDENTIELLE — LNT. GRANDOU
           </div>
@@ -1475,7 +1475,7 @@ function zoomPaper(paperId) {
       break;
     case 'boussole':
       html = `
-        <div style="font-family: 'Special Elite', cursive; font-size: 1.1rem; line-height: 1.45; color: #000; background: url('paper.png') center/cover; padding: 1.5rem; border: 2px solid #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.15); text-align: left;">
+        <div style="font-family: 'Special Elite', cursive; font-size: 1.1rem; line-height: 1.45; color: #000; background: url('img/paper.png') center/cover; padding: 1.5rem; border: 2px solid #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.15); text-align: left;">
           <div style="font-weight: bold; font-size: 1.3rem; text-align: left; margin-bottom: 0.8rem; text-transform: uppercase; color: #000; border-bottom: 2px solid #000; padding-bottom: 0.4rem;">
             BOUSSOLE DE ROLAND GRANDOU
           </div>
@@ -1768,7 +1768,7 @@ function showToast(msg) {
     bottom: 2.5rem;
     left: 50%;
     transform: translateX(-50%);
-    background: #2e1d0c url('paper.png') center/cover no-repeat;
+    background: #2e1d0c url('img/paper.png') center/cover no-repeat;
     border: 2.5px double #8a7040;
     color: #1a1008;
     padding: 12px 28px;
