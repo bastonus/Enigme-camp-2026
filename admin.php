@@ -457,6 +457,69 @@ $lastRegistration = $totalAgents > 0 ? $results[$totalAgents - 1]['timestamp'] :
         display: none;
       }
     }
+
+    /* Custom Cursor Styles */
+    html, body, *, *::before, *::after,
+    button, input, select, textarea, a, .btn-action, .btn-back, [onclick] {
+      cursor: none !important;
+    }
+    
+    #custom-cursor {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      pointer-events: none;
+      z-index: 999999 !important;
+      transform: translate(-50%, -50%);
+      transition: transform 0.08s ease-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #custom-cursor::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid #D4820A;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.8), inset 0 0 2px rgba(0, 0, 0, 0.6), 0 0 8px rgba(212, 130, 10, 0.5);
+      transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #custom-cursor::after {
+      content: '';
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background-color: #C0392B;
+      box-shadow: 0 0 3px rgba(0, 0, 0, 0.8), 0 0 6px rgba(192, 57, 43, 0.8);
+      transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.2s, box-shadow 0.2s;
+    }
+
+    #custom-cursor.hover::before {
+      transform: scale(1.4);
+      border-color: #00FF88;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.8), inset 0 0 3px rgba(0, 0, 0, 0.6), 0 0 12px rgba(0, 255, 136, 0.8);
+    }
+    #custom-cursor.hover::after {
+      transform: scale(0.6);
+      background-color: #00FF88;
+      box-shadow: 0 0 8px rgba(0, 255, 136, 0.9);
+    }
+
+    #custom-cursor.active::before {
+      transform: scale(0.7);
+      border-color: #FFB830;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 184, 48, 0.8);
+    }
+    #custom-cursor.active::after {
+      transform: scale(1.6);
+      background-color: #FFB830;
+      box-shadow: 0 0 12px rgba(255, 184, 48, 0.9);
+    }
   </style>
 </head>
 <body>
@@ -595,6 +658,44 @@ $lastRegistration = $totalAgents > 0 ? $results[$totalAgents - 1]['timestamp'] :
         }, 300);
       }
     });
+  </script>
+
+  <!-- Curseur custom -->
+  <div id="custom-cursor"></div>
+  
+  <script>
+    (function() {
+      const cursor = document.getElementById('custom-cursor');
+      if (!cursor) return;
+      
+      document.addEventListener('mousemove', e => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top  = e.clientY + 'px';
+      });
+
+      document.addEventListener('mousedown', () => {
+        cursor.classList.add('active');
+      });
+      document.addEventListener('mouseup', () => {
+        cursor.classList.remove('active');
+      });
+      
+      document.addEventListener('mouseover', e => {
+        const target = e.target;
+        if (!target) return;
+        const isInteractive = target.closest('button, input, select, textarea, a, .btn-action, .btn-back, [onclick]');
+        if (isInteractive) {
+          cursor.classList.add('hover');
+        } else {
+          cursor.classList.remove('hover');
+        }
+      });
+      document.addEventListener('mouseout', e => {
+        if (!e.relatedTarget) {
+          cursor.classList.remove('hover');
+        }
+      });
+    })();
   </script>
 </body>
 </html>

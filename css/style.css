@@ -4,8 +4,15 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Caveat:wght@400;700&family=VT323&family=Cinzel:wght@600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
 
-/* ── Reset & Base ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after,
+button, input, select, textarea, a, .obj, .modal-close, [onclick],
+.leaflet-container, .leaflet-container *, .leaflet-interactive, .leaflet-grab, .leaflet-dragging,
+.leaflet-marker-icon, .leaflet-marker-shadow, .leaflet-pane, .leaflet-tile-container {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  cursor: none !important; /* Force hide native browser cursors globally */
+}
 
 :root {
   --amber:   #D4820A;
@@ -20,7 +27,7 @@ html, body {
   overflow: hidden;
   background: #000;
   font-family: 'Special Elite', cursive;
-  cursor: none; /* on remplace par curseur custom */
+  cursor: none !important; /* on remplace par curseur custom */
 }
 
 /* ══════════════════════════════════════════
@@ -262,6 +269,67 @@ html, body {
     transparent 70%);
   mix-blend-mode: screen;
   transition: opacity .4s;
+}
+
+#custom-cursor {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 999999 !important; /* Extremely high to stay above all modals & warnings */
+  transform: translate(-50%, -50%);
+  transition: transform 0.08s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Outer Ring */
+#custom-cursor::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid #D4820A; /* --amber */
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.8), inset 0 0 2px rgba(0, 0, 0, 0.6), 0 0 8px rgba(212, 130, 10, 0.5);
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Inner Dot */
+#custom-cursor::after {
+  content: '';
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #C0392B; /* --red */
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.8), 0 0 6px rgba(192, 57, 43, 0.8);
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.2s, box-shadow 0.2s;
+}
+
+/* Hover state over interactive elements */
+#custom-cursor.hover::before {
+  transform: scale(1.4);
+  border-color: #00FF88; /* --green-uv */
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.8), inset 0 0 3px rgba(0, 0, 0, 0.6), 0 0 12px rgba(0, 255, 136, 0.8);
+}
+#custom-cursor.hover::after {
+  transform: scale(0.6);
+  background-color: #00FF88;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.9);
+}
+
+/* Active state (mousedown / click) */
+#custom-cursor.active::before {
+  transform: scale(0.7);
+  border-color: #FFB830;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 184, 48, 0.8);
+}
+#custom-cursor.active::after {
+  transform: scale(1.6);
+  background-color: #FFB830;
+  box-shadow: 0 0 12px rgba(255, 184, 48, 0.9);
 }
 
 #candle-glow {

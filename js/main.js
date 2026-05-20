@@ -239,6 +239,34 @@ function initSpotlight() {
       cursor.style.top  = posY + 'px';
     }
   });
+
+  // Track hover and active states for custom cursor
+  if (cursor) {
+    document.addEventListener('mousedown', () => {
+      cursor.classList.add('active');
+    });
+    document.addEventListener('mouseup', () => {
+      cursor.classList.remove('active');
+    });
+    document.addEventListener('mouseover', e => {
+      const target = e.target;
+      if (!target) return;
+      
+      const isInteractive = target.closest('button, input, select, textarea, a, .obj, .modal-close, [onclick], .morse-paper-close, .ticket-close, .compass-wheel-container, .compass-glass-shine, .leaflet-interactive, .leaflet-control-zoom-in, .leaflet-control-zoom-out');
+      
+      if (isInteractive) {
+        cursor.classList.add('hover');
+      } else {
+        cursor.classList.remove('hover');
+      }
+    });
+    // Fallback mouseleave to clean hover state
+    document.addEventListener('mouseout', e => {
+      if (!e.relatedTarget) {
+        cursor.classList.remove('hover');
+      }
+    });
+  }
 }
 
 /* ──────────────────────────────────────
@@ -1557,7 +1585,7 @@ function openTypewriter() {
       paper.textContent = "";
     }
     if (hint) {
-      hint.textContent = "Saisissez le lieu de départ décrypté au clavier pour lancer la transmission...";
+      hint.textContent = "Saisissez la combinaison de codes secrets au clavier pour lancer la transmission (regardez le carnet pour savoir)...";
       hint.style.display = 'block';
     }
   }
