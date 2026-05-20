@@ -268,7 +268,7 @@ html, body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 400; /* couvre toute la page, sous les modales (500) */
+  z-index: 850; /* couvre toute la page, y compris les modales (carte à 800) */
   background: radial-gradient(circle 120vw at 60.31% 4.53%, 
     rgba(255, 140, 30, 0.28) 0%, 
     rgba(255, 100, 10, 0.10) 50%, 
@@ -1157,28 +1157,32 @@ html, body {
 /* ──────────────────────────────────────
    MODAL BOUSSOLE — MINI-JEU
 ────────────────────────────────────── */
+#modal-boussole {
+  background: rgba(10, 8, 5, 0.82);
+}
+
 #modal-boussole .modal-box {
-  width: min(440px, 92vw);
-  background: rgba(30, 20, 10, 0.88);
-  backdrop-filter: blur(10px);
-  border: 2px solid #8a7040;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.95);
-  border-radius: 4px;
+  width: min(720px, 92vw);
+  background: none;
+  backdrop-filter: none;
+  border: none;
+  box-shadow: none;
   padding: 2rem;
-  color: #f4eedc;
+  color: #ffffff;
 }
 
 #modal-boussole .modal-close {
   position: absolute;
   top: 1rem;
   right: 1.2rem;
-  font-size: 1.3rem;
-  color: #a89060;
+  font-size: 2rem;
+  color: #ffffff;
   cursor: pointer;
   z-index: 100;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 #modal-boussole .modal-close:hover {
-  color: #ffd700;
+  color: #ff5555;
 }
 
 #modal-boussole.open .modal-box {
@@ -1204,7 +1208,7 @@ html, body {
     position: fixed;
     top: 50%;
     left: 50%;
-    width: min(440px, 92vw);
+    width: min(720px, 92vw);
     transform: translate(-50%, -50%) scale(1) rotate(0deg);
     opacity: 1;
   }
@@ -1215,7 +1219,7 @@ html, body {
     position: fixed;
     top: 50%;
     left: 50%;
-    width: min(440px, 92vw);
+    width: min(720px, 92vw);
     transform: translate(-50%, -50%) scale(1) rotate(0deg);
     opacity: 1;
   }

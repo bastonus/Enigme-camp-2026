@@ -1206,19 +1206,16 @@ function openCompassModal() {
   const wheel = document.getElementById('compass-wheel');
   
   // Si déjà orientée, on repositionne sur 320° et on montre le succès
+  // Si déjà orientée, on repositionne sur 320° et on montre le succès
   if (State.boussoleOriented) {
     compassDragState.currentRotation = 320;
     if (wheel) wheel.style.transform = 'rotate(320deg)';
     const readout = document.getElementById('compass-angle-val');
     if (readout) {
-      readout.textContent = '320°';
+      readout.textContent = '320';
       readout.style.color = '#2ecc71';
       readout.style.textShadow = '0 0 10px rgba(46,204,113,0.5)';
     }
-    const successMsg = document.getElementById('compass-success-msg');
-    if (successMsg) successMsg.style.display = 'block';
-    const instruction = document.getElementById('compass-instruction');
-    if (instruction) instruction.style.display = 'none';
     openModal('modal-boussole');
     return;
   }
@@ -1229,17 +1226,14 @@ function openCompassModal() {
   
   const readout = document.getElementById('compass-angle-val');
   if (readout) {
-    readout.textContent = '0°';
+    readout.textContent = '0';
     readout.style.color = '#ffd700';
     readout.style.textShadow = 'none';
   }
   
-  const successMsg = document.getElementById('compass-success-msg');
-  if (successMsg) successMsg.style.display = 'none';
-  
   const instruction = document.getElementById('compass-instruction');
   if (instruction) {
-    instruction.textContent = "Trouvez la direction prise par l'agent clandestin. Faites tourner le cadran pour chercher où l'aiguille se bloque physiquement pour relever l'azimut.";
+    instruction.textContent = "Trouver la direction prise par l’agent clandestin depuis sa ville de départ. Le lieutenant Grandou s'est servi de cette boussole pour s'orienter et fuir d'une ville à une autre lors de sa traque. Faites tourner le cadran pour chercher où l'aiguille se bloque physiquement afin de relever l'azimut.";
     instruction.style.display = 'block';
   }
   
@@ -1291,7 +1285,7 @@ function moveCompassDrag(e) {
   
   const readout = document.getElementById('compass-angle-val');
   if (readout) {
-    readout.textContent = `${displayAngle}°`;
+    readout.textContent = `${displayAngle}`;
   }
   
   if (Math.abs(newRotation - compassDragState.lastBeepRotation) >= 4) {
@@ -1305,11 +1299,11 @@ function moveCompassDrag(e) {
   const speed = dt > 0 ? Math.abs(delta) / dt : 0; // degrees per ms
   
   if (Math.abs(displayAngle - 320) <= 2.5) {
-    if (speed < 0.12) {
+    if (speed < 0.04) {
       const targetRotation = Math.round(newRotation - (displayAngle - 320));
       if (wheel) wheel.style.transform = `rotate(${targetRotation}deg)`;
       if (readout) {
-        readout.textContent = "320°";
+        readout.textContent = "320";
         readout.style.color = "#2ecc71";
         readout.style.textShadow = "0 0 10px rgba(46, 204, 113, 0.5)";
       }

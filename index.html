@@ -372,16 +372,22 @@ DATE : <span id="dynamic-teletype-date">20 MAI 1944</span> — 21H30
 
 <!--  MODAL — BOUSSOLE D'AZIMUT            -->
 <!-- ═══════════════════════════════════════ -->
-<div id="modal-boussole" class="modal-overlay">
-  <div class="modal-box" style="position:relative;">
-    <span class="modal-close" onclick="closeModal('modal-boussole')">✕</span>
-    <div class="compass-modal-content" style="display:flex; flex-direction:column; align-items:flex-start; width:100%;">
-      <h3 style="font-family:'Special Elite', cursive; text-align:left; color:#d4c890; margin-top:0; margin-bottom:12px; font-size:1.4rem; letter-spacing:1px; width:100%;">BOUSSOLE D'AZIMUT</h3>
-      <p id="compass-instruction" style="font-family:'Special Elite', cursive; text-align:left; color:#a89060; font-size:0.85rem; margin-bottom:1.2rem; line-height:1.45; width:100%;">Trouver la direction prise par l’agent clandestin depuis sa ville de départ. Le lieutenant Grandou s'est servi de cette boussole pour s'orienter et fuir d'une ville à une autre lors de sa traque. Faites tourner le cadran pour chercher où l'aiguille se bloque physiquement afin de relever l'azimut.</p>
+<div id="modal-boussole" class="modal-overlay" onclick="if(event.target === this) closeModal('modal-boussole')" style="background: rgba(10, 8, 5, 0.82) !important;">
+  <div class="modal-box" style="position:relative; width:min(720px, 92vw) !important; background:none !important; border:none !important; box-shadow:none !important; padding:2rem; overflow:hidden !important;">
+    <span class="modal-close" onclick="closeModal('modal-boussole')" style="color:#ffffff !important; font-size:2rem !important;">✕</span>
+    <div class="compass-modal-content" style="display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; justify-content:center; gap:30px; width:100%;">
       
-      <div class="compass-game-area" style="position:relative; width:280px; height:305px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; margin:10px 0;">
-        <!-- Index marker indicating the top (index pointer) -->
-        <div class="compass-index-pointer" style="font-size:1.4rem; color:#e74c3c; line-height:1; margin-bottom:2px; z-index:15; position:relative; text-shadow:0 2px 4px rgba(0,0,0,0.5); user-select:none;">▼</div>
+      <!-- Left side: Compass area with angle readout on top of the red arrow -->
+      <div class="compass-left-col" style="display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
+        
+        <!-- Angle display above the red arrow -->
+        <div class="compass-readout" style="text-align:center; margin-bottom:-8px; user-select:none; z-index:20;">
+          <span id="compass-angle-val" style="font-family:'Consolas', 'Courier New', monospace; font-size:2.2rem; color:#ffd700; font-weight:bold; letter-spacing:1px; text-shadow:0 2px 5px rgba(0,0,0,0.95);">0</span>
+        </div>
+        
+        <div class="compass-game-area" style="position:relative; width:280px; height:305px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; margin:0;">
+          <!-- Index marker indicating the top (index pointer) -->
+          <div class="compass-index-pointer" style="font-size:1.4rem; color:#e74c3c; line-height:1; margin-bottom:2px; z-index:15; position:relative; text-shadow:0 2px 4px rgba(0,0,0,0.5); user-select:none;">▼</div>
         
         <!-- Rotating compass disk -->
         <div id="compass-wheel-container" style="position:relative; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle, #2a2015 60%, #151008 100%); border:8px double #8a7040; box-shadow:0 10px 25px rgba(0,0,0,0.8), inset 0 5px 15px rgba(0,0,0,0.6); cursor:grab; user-select:none; touch-action:none;">
@@ -499,11 +505,14 @@ DATE : <span id="dynamic-teletype-date">20 MAI 1944</span> — 21H30
         </div>
       </div>
       
-      <!-- Angle display -->
-      <div class="compass-readout" style="text-align:left; width:100%; margin-top:0.8rem; user-select:none;">
-        <span style="font-family:'Special Elite', cursive; font-size:0.95rem; color:#888;">AZIMUT RÉGLÉ : </span>
-        <span id="compass-angle-val" style="font-family:'VT323', monospace; font-size:2.2rem; color:#ffd700; font-weight:bold; letter-spacing:1px; vertical-align:middle; line-height:1;">0°</span>
+      </div> <!-- Closes compass-left-col -->
+      
+      <!-- Right column: Title & Instructions -->
+      <div class="compass-right-col" style="display:flex; flex-direction:column; align-items:flex-start; flex-grow:1; max-width:340px; min-width:180px;">
+        <h3 style="font-family:'Special Elite', cursive; text-align:left; color:#ffffff; margin-top:0; margin-bottom:12px; font-size:1.4rem; letter-spacing:1px; width:100%;">BOUSSOLE</h3>
+        <p id="compass-instruction" style="font-family:'Special Elite', cursive; text-align:left; color:#e0e0e0; font-size:0.85rem; margin-bottom:0; line-height:1.45; width:100%;">Trouver la direction prise par l’agent clandestin depuis sa ville de départ. Le lieutenant Grandou s'est servi de cette boussole pour s'orienter et fuir d'une ville à une autre lors de sa traque. Faites tourner le cadran pour chercher où l'aiguille se bloque physiquement afin de relever l'azimut.</p>
       </div>
+      
     </div>
   </div>
 </div>
