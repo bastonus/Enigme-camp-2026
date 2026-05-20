@@ -886,13 +886,34 @@ function openMapModal() {
 
       // Villes et fil d'ariane rouge
       const MAP_CITIES = [
-        { name: 'Périgueux', coords: [45.1839, 0.7114], rot: -2 },
+        { name: 'Montpon', coords: [45.009, 0.162], rot: -2 },
+        { name: 'Ribérac', coords: [45.247, 0.339], rot: 3 },
+        { name: 'Mussidan', coords: [45.035, 0.364], rot: -1 },
+        { name: 'Neuvic', coords: [45.101, 0.469], rot: 4 },
+        { name: 'Saint-Astier', coords: [45.145, 0.528], rot: -3 },
+        { name: 'Tocane', coords: [45.253, 0.478], rot: 2 },
+        { name: 'Verteillac', coords: [45.347, 0.366], rot: -4 },
+        { name: 'Mareuil', coords: [45.451, 0.451], rot: 1 },
+        { name: 'Brantôme', coords: [45.364, 0.648], rot: -2 },
+        { name: 'Bourdeilles', coords: [45.322, 0.587], rot: 3 },
+        { name: 'Mensignac', coords: [45.195, 0.560], rot: -1 },
+        { name: 'Chancelade', coords: [45.205, 0.666], rot: 4 },
+        { name: 'Nontron', coords: [45.528, 0.662], rot: -3 },
+        { name: 'St-Jean-de-Côle', coords: [45.422, 0.838], rot: 2 },
+        { name: 'Thiviers', coords: [45.415, 0.920], rot: -4 },
+        { name: 'Sorges', coords: [45.301, 0.873], rot: 1 },
+        { name: 'Savignac', coords: [45.274, 0.862], rot: -2 },
+        { name: 'Trélissac', coords: [45.195, 0.767], rot: 3 },
+        { name: 'Périgueux', coords: [45.1839, 0.7114], rot: -1 },
+        { name: 'Vergt', coords: [45.027, 0.718], rot: 4 },
+        { name: 'Le Bugue', coords: [44.918, 0.927], rot: -3 },
+        { name: 'Rouffignac', coords: [45.048, 0.978], rot: 2 },
+        { name: 'Thenon', coords: [45.1383, 1.0717], rot: -4 },
+        { name: 'Hautefort', coords: [45.2595, 1.1497], rot: 1 },
+        { name: 'Excideuil', coords: [45.3371, 1.0475], rot: -2 },
         { name: 'Cubjac', coords: [45.2222, 0.9389], rot: 3 },
-        { name: 'Excideuil', coords: [45.3371, 1.0475], rot: -4 },
-        { name: 'Hautefort', coords: [45.2595, 1.1497], rot: 2 },
-        { name: 'Thenon', coords: [45.1383, 1.0717], rot: -1 },
-        { name: 'Montignac', coords: [45.0658, 1.1650], rot: 4 },
-        { name: 'Tourtoirac', coords: TOURTOIRAC, rot: -3 }
+        { name: 'Montignac', coords: [45.0658, 1.1650], rot: -1 },
+        { name: 'Tourtoirac', coords: TOURTOIRAC, rot: 4 }
       ];
 
       // Fil rouge reliant les villes (continu)
@@ -986,9 +1007,8 @@ function openMapModal() {
         checkMapSuccess();
       });
 
-      // Ajuster la vue pour englober toutes les villes
-      const bounds = L.latLngBounds(pathCoords);
-      fullMap.fitBounds(bounds, { padding: [60, 60] });
+      // Centrer la carte sur Périgueux (niveau de zoom 10 pour voir large sans donner trop d'indications)
+      fullMap.setView([45.1839, 0.7114], 10);
 
       initRapporteurTicks();
       initRapporteurKeyboard();
