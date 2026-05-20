@@ -1261,6 +1261,7 @@ function startCompassDrag(e) {
   
   compassDragState.startAngle = Math.atan2(clientY - compassDragState.centerY, clientX - compassDragState.centerX) * (180 / Math.PI);
   compassDragState.dragging = true;
+  compassDragState.lastTime = performance.now();
   
   if (container.setPointerCapture && e.pointerId !== undefined) {
     container.setPointerCapture(e.pointerId);
@@ -1298,18 +1299,28 @@ function moveCompassDrag(e) {
     compassDragState.lastBeepRotation = newRotation;
   }
   
+  const now = performance.now();
+  const dt = now - (compassDragState.lastTime || now);
+  compassDragState.lastTime = now;
+  const speed = dt > 0 ? Math.abs(delta) / dt : 0; // degrees per ms
+  
   if (Math.abs(displayAngle - 320) <= 2.5) {
-    const targetRotation = Math.round(newRotation - (displayAngle - 320));
-    if (wheel) wheel.style.transform = `rotate(${targetRotation}deg)`;
-    if (readout) {
-      readout.textContent = "320°";
-      readout.style.color = "#2ecc71";
-      readout.style.textShadow = "0 0 10px rgba(46, 204, 113, 0.5)";
+    if (speed < 0.12) {
+      const targetRotation = Math.round(newRotation - (displayAngle - 320));
+      if (wheel) wheel.style.transform = `rotate(${targetRotation}deg)`;
+      if (readout) {
+        readout.textContent = "320°";
+        readout.style.color = "#2ecc71";
+        readout.style.textShadow = "0 0 10px rgba(46, 204, 113, 0.5)";
+      }
+      
+      compassDragState.dragging = false;
+      compassDragState.currentRotation = targetRotation;
+      triggerCompassSuccess();
+    } else {
+      compassDragState.startAngle = currentAngle;
+      compassDragState.currentRotation = newRotation;
     }
-    
-    compassDragState.dragging = false;
-    compassDragState.currentRotation = targetRotation;
-    triggerCompassSuccess();
   } else {
     compassDragState.startAngle = currentAngle;
     compassDragState.currentRotation = newRotation;
