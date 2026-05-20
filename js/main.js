@@ -91,7 +91,7 @@ Ne faites pas de bruit.
 
                         — WHISKY`;
 
-const PREAMBLE = `ÉTAT-MAJOR DES F.F.I. — SECTEUR PÉRIGORD VERT
+const PREAMBLE = `ÉTAT-MAJOR DES F.F.I. — SECTEUR PÉRIGORD BLANC
 ORDRE DE MISSION N°4 — CONFIDENTIEL
 =============================================
 DATE : ${getGameDate(0, true, false)} — 21H30
