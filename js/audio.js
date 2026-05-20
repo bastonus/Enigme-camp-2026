@@ -12,44 +12,6 @@ const AudioManager = (() => {
     return ctx;
   }
 
-  /* Helper robustes pour éviter les AbortError lors des transitions rapides play/pause */
-  function safePlay(audioEl) {
-    if (!audioEl) return;
-    try {
-      const p = audioEl.play();
-      if (p !== undefined) {
-        audioEl._lastPlayPromise = p;
-        p.catch(e => {
-          console.warn('Lecture audio empêchée ou interrompue:', e);
-        });
-      }
-    } catch (e) {
-      console.warn('Erreur lors du play:', e);
-    }
-  }
-
-  function safePause(audioEl) {
-    if (!audioEl) return;
-    const p = audioEl._lastPlayPromise;
-    if (p !== undefined) {
-      p.then(() => {
-        if (audioEl._lastPlayPromise === p) {
-          try {
-            audioEl.pause();
-          } catch (e) {
-            console.warn('Erreur lors du pause après résolution:', e);
-          }
-        }
-      }).catch(() => {});
-    } else {
-      try {
-        audioEl.pause();
-      } catch (e) {
-        console.warn('Erreur lors du pause:', e);
-      }
-    }
-  }
-
   /* ── Bip Morse ── */
   function beep(duration = 80, freq = 680, vol = 0.4) {
     const c = getCtx();
@@ -125,7 +87,7 @@ const AudioManager = (() => {
       introTypewriterAudio.volume = 0.45;
     }
     introTypewriterAudio.currentTime = 0;
-    safePlay(introTypewriterAudio);
+    introTypewriterAudio.play().catch(e => console.warn('Intro typewriter sound blocked:', e));
   }
 
   function stopIntroTypewriter() {
@@ -135,7 +97,7 @@ const AudioManager = (() => {
       vol -= 0.04;
       if (vol <= 0) {
         clearInterval(interval);
-        safePause(introTypewriterAudio);
+        introTypewriterAudio.pause();
         introTypewriterAudio.volume = 0.45;
       } else {
         introTypewriterAudio.volume = vol;
@@ -153,7 +115,7 @@ const AudioManager = (() => {
       staticAudio.volume = 0.25;
     }
     staticAudio.currentTime = 0;
-    safePlay(staticAudio);
+    staticAudio.play().catch(e => console.warn('Static audio blocked:', e));
   }
 
   function stopStatic() {
@@ -163,7 +125,7 @@ const AudioManager = (() => {
       vol -= 0.02;
       if (vol <= 0) {
         clearInterval(interval);
-        safePause(staticAudio);
+        staticAudio.pause();
         staticAudio.volume = 0.25;
       } else {
         staticAudio.volume = vol;
@@ -260,16 +222,22 @@ const AudioManager = (() => {
 
   /* ── Voix Radio Londres (Les français parlent aux français) ── */
   let bbcVoiceAudio = null;
+  let bbcFadeInterval = null;
 
   function startRadioLondresVoice(loop = false, onEnded = null) {
+    if (bbcFadeInterval) {
+      clearInterval(bbcFadeInterval);
+      bbcFadeInterval = null;
+    }
     if (!bbcVoiceAudio) {
       bbcVoiceAudio = new Audio('audio/Les français parlent aux français.wav');
       bbcVoiceAudio.volume = 0.8;
     }
+    bbcVoiceAudio.volume = 0.8;
     bbcVoiceAudio.loop = loop;
     bbcVoiceAudio.onended = onEnded;
     bbcVoiceAudio.currentTime = 0;
-    safePlay(bbcVoiceAudio);
+    bbcVoiceAudio.play().catch(e => console.warn('BBC voice play blocked:', e));
   }
 
   function makeRadioLondresVoiceSingle(onEnded) {
@@ -282,12 +250,17 @@ const AudioManager = (() => {
   function stopRadioLondresVoice() {
     if (!bbcVoiceAudio) return;
     bbcVoiceAudio.onended = null;
+    if (bbcFadeInterval) {
+      clearInterval(bbcFadeInterval);
+      bbcFadeInterval = null;
+    }
     let vol = bbcVoiceAudio.volume;
-    const interval = setInterval(() => {
+    bbcFadeInterval = setInterval(() => {
       vol -= 0.05;
       if (vol <= 0) {
-        clearInterval(interval);
-        safePause(bbcVoiceAudio);
+        clearInterval(bbcFadeInterval);
+        bbcFadeInterval = null;
+        bbcVoiceAudio.pause();
         bbcVoiceAudio.volume = 0.8;
       } else {
         bbcVoiceAudio.volume = vol;
@@ -493,7 +466,7 @@ const AudioManager = (() => {
       }
       
       if (st.audio.paused) {
-        safePlay(st.audio);
+        st.audio.play().catch(e => console.warn('Station play blocked:', e));
       }
     });
   }
@@ -509,7 +482,7 @@ const AudioManager = (() => {
           st.gain.gain.value = 0;
         }
         if (st.audio && !st.audio.paused) {
-          safePause(st.audio);
+          st.audio.pause();
         }
       });
       return;
@@ -529,12 +502,12 @@ const AudioManager = (() => {
       victoryChantAudio.loop = true;
     }
     victoryChantAudio.currentTime = 0;
-    safePlay(victoryChantAudio);
+    victoryChantAudio.play().catch(e => console.warn('Chant des partisans play blocked:', e));
   }
 
   function stopChantDesPartisans() {
     if (victoryChantAudio) {
-      safePause(victoryChantAudio);
+      victoryChantAudio.pause();
     }
   }
 

@@ -167,14 +167,14 @@ Date : 4 août 1944
       <!-- Page gauche : Grille et Message codé -->
       <div class="carnet-page" style="justify-content: flex-start; gap: 4%;">
         <div class="carnet-title" style="font-size: 1.8cqw; margin-bottom: 2%;">ÉCHIQUIER DE SUBSTITUTION</div>
-        <div class="carnet-grid" id="cipher-grid-container" style="grid-template-columns: repeat(10, 1fr); gap: 0.4cqw; margin-bottom: 4%;">
+        <div class="carnet-grid" id="cipher-grid-container" style="grid-template-columns: repeat(6, 1fr); gap: 0.8cqw; margin-bottom: 4%;">
           <!-- Rempli dynamiquement par renderActiveGrid() dans js/main.js -->
         </div>
         <div class="carnet-note" style="font-size: 1.5cqw; margin-top: 1%; font-weight: bold; border-top: 1px dashed #000; padding-top: 3%;">
           MESSAGE SECRÈT CODÉ :
         </div>
         <div class="carnet-encoded" style="font-size: 1.8cqw; margin-top: 1%; letter-spacing: 0.05em; font-weight: bold; text-align: center;">
-          9 · 80 · 1 · 85 · 5 · 86 · 22
+          22 · 43 · 11 · 34 · 14 · 35 · 51
         </div>
         <div class="carnet-decoded" style="font-size: 1.35cqw; margin-top: 1%; color: #000; font-style: italic; text-align: center; padding-top: 0;">
           [ Clé 1 ]
@@ -548,8 +548,8 @@ Date : 4 août 1944
       <!-- Moitié droite : Adresse / Enregistrement -->
       <div style="flex:0.8; padding: 4%; position:relative; z-index:10; display:flex; flex-direction:column;">
         <!-- Timbre Historique -->
-        <div style="display:flex; justify-content:flex-end; margin-bottom:2%;">
-          <img src="timbre.png" alt="Timbre historique" style="width:17cqw; height:21cqw; object-fit:contain; filter: drop-shadow(3px 3px 5px rgba(0,0,0,0.4)); transform: rotate(-2deg); border-radius: 1px; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='rotate(1deg) scale(1.15)'; this.style.filter='drop-shadow(5px 5px 8px rgba(0,0,0,0.5))';" onmouseout="this.style.transform='rotate(-2deg)'; this.style.filter='drop-shadow(3px 3px 5px rgba(0,0,0,0.4))';" onerror="this.onerror=null; this.src='timbre.jpg';">
+        <div style="display:flex; justify-content:flex-end; margin-bottom:2%; margin-top:-2%;">
+          <img src="timbre.png" alt="Timbre historique" style="width:14cqw; height:16.5cqw; object-fit:contain; filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.4)); transform: rotate(-3deg); border-radius: 1px; cursor: pointer; transition: transform 0.3s ease;" onmouseover="this.style.transform='rotate(1deg) scale(1.05)'" onmouseout="this.style.transform='rotate(-3deg)'" onerror="this.onerror=null; this.src='timbre.jpg';">
         </div>
         <!-- Lignes d'adresse transformées en inputs -->
         <div style="font-family:'Special Elite',cursive; font-size:2.2cqw; color:#3a2a10; margin-bottom:8px; line-height:1.3;">

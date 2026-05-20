@@ -129,7 +129,12 @@ html, body {
   letter-spacing: 2px;
 }
 
-/* La gestion du mode paysage forcé et de l'adaptation gyroscope sur mobile est gérée dynamiquement en JS */
+/* On bloque les écrans de type mobile et tablette tactile étroite */
+@media (max-width: 768px), (pointer: coarse) and (max-width: 1024px) {
+  #mobile-warning {
+    display: flex !important;
+  }
+}
 
 /* ══════════════════════════════════════════
    ÉCRAN D'INTRODUCTION
@@ -430,6 +435,13 @@ html, body {
   background: transparent;
   text-align: center;
   border: none;
+}
+.cg-label {
+  color: #8c1c1c;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 0.2cqw;
 }
 .cg-c {
   font-family: 'Special Elite', cursive;
@@ -1412,3 +1424,24 @@ html, body {
   box-shadow: 0 15px 45px rgba(0,0,0,0.9);
 }
 
+/* ══════════════════════════════════════════
+   CLASSES ET CORRECTIONS POUR BOUSSOLE ET MOBILE
+   ══════════════════════════════════════════ */
+
+/* Classes de dimensionnement de la boussole */
+.compass-game-area {
+  width: 280px;
+  height: 305px;
+  margin: 10px 0;
+}
+#compass-wheel-container {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2a2015 60%, #151008 100%);
+  border: 8px double #8a7040;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 5px 15px rgba(0,0,0,0.6);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}

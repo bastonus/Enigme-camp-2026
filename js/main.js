@@ -812,7 +812,7 @@ function audioMorseSequence(onEnded) {
 ────────────────────────────────────── */
 
 // Coordonnées de Tourtoirac (clocher)
-const TOURTOIRAC = [45.0165, 1.0398];
+const TOURTOIRAC = [45.2708, 1.0599];
 const IGN_TOPO_URL = 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN50.1950&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
 const IGN_ORTHO_URL = 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
 
@@ -1322,18 +1322,53 @@ function interactWhisky() {
 /* Zoom de lisibilité pour tous les messages */
 function zoomPaper(paperId) {
   const contentEl = document.getElementById('paper-zoom-content');
+  const boxEl = document.getElementById('paper-zoom-box');
   if (!contentEl) return;
+  
+  if (boxEl) {
+    boxEl.style.background = "url('paper.png') center/cover no-repeat";
+    boxEl.style.backgroundBlendMode = "normal";
+    boxEl.style.border = "none";
+    boxEl.style.color = "#000";
+    boxEl.style.aspectRatio = "auto";
+    boxEl.style.display = "block";
+    boxEl.style.padding = "2.5rem 2.2rem";
+    
+    const closeBtn = boxEl.querySelector('.modal-close');
+    if (closeBtn) {
+      closeBtn.style.color = "#000";
+      closeBtn.style.borderColor = "rgba(0,0,0,0.2)";
+    }
+  }
   
   let html = '';
   switch(paperId) {
     case 'cigar':
+      if (boxEl) {
+        boxEl.style.background = "#163e20 url('paper.png') center/cover";
+        boxEl.style.backgroundBlendMode = "multiply";
+        boxEl.style.border = "6px double #d4af37";
+        boxEl.style.aspectRatio = "auto";
+        boxEl.style.display = "flex";
+        boxEl.style.flexDirection = "column";
+        boxEl.style.justifyContent = "center";
+        boxEl.style.alignItems = "center";
+        boxEl.style.padding = "1rem 2rem";
+        boxEl.style.color = "#ffffff";
+        
+        const closeBtn = boxEl.querySelector('.modal-close');
+        if (closeBtn) {
+          closeBtn.style.color = "#d4af37";
+          closeBtn.style.borderColor = "rgba(212,175,55,0.4)";
+        }
+      }
       html = `
-        <div style="font-weight: bold; font-size: 1.45rem; border-bottom: 2px solid #000; padding-bottom: 0.4rem; margin-bottom: 0.8rem; text-transform: uppercase;">
+        <div style="font-weight: bold; font-size: 1.45rem; border-bottom: 2px solid #d4af37; padding-bottom: 0.2rem; margin-bottom: 0.4rem; text-transform: uppercase; color: #ffffff; text-shadow: 0px 1px 2px rgba(0,0,0,0.5); width: 100%; text-align: center;">
           Réseau AS — Message Secret
         </div>
-        <div style="font-weight: bold; font-size: 1.35rem; margin-bottom: 0.4rem; color: #8c1c1c; text-align: center;">BBC · 58.7 MHz</div>
-        <div style="font-size: 1.15rem; margin-bottom: 0.4rem; text-align: center;">Écoute : 21h45</div>
-        <div style="border-top: 2px dashed #000; padding-top: 0.6rem; margin-top: 0.6rem; font-style: italic; font-weight: bold; font-size: 1.25rem; text-align: center;">
+        <div style="font-weight: bold; font-size: 1.35rem; margin-bottom: 0.2rem; color: #f5e9c8; text-align: center; text-shadow: 0px 1px 2px rgba(0,0,0,0.5); width: 100%;">BBC · 58.7 MHz</div>
+        <div style="font-size: 1.15rem; margin-bottom: 0.2rem; text-align: center; color: #ffffff; width: 100%;">Écoute : 21h45</div>
+        <div style="border-top: 2px dashed #d4af37; padding-top: 0.4rem; margin-top: 0.4rem; font-style: italic; font-weight: bold; font-size: 1.25rem; text-align: center; color: #f5e9c8; text-shadow: 0px 1px 2px rgba(0,0,0,0.5); width: 100%;">
           "Les sanglots longs des violons de l'automne..."
         </div>
       `;
@@ -1754,9 +1789,6 @@ function shootLuger() {
 /* ──────────────────────────────────────
    ÉCHIQUIER DE SUBSTITUTION & CARNET
 ────────────────────────────────────── */
-const GRID_KEY = [1, 8, 2, 3, 4, 5, 6, 7, 9, 0];
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
 function buildCipherGrid() {
   renderActiveGrid();
 }
@@ -1766,40 +1798,37 @@ function renderActiveGrid() {
   if (!container) return;
   container.innerHTML = '';
 
-  // 1. Headers Row: 1 8 2 3 4 5 6 7 9 0
-  GRID_KEY.forEach(h => {
+  const headers = ['', '1', '2', '3', '4', '5'];
+  headers.forEach((h, i) => {
     const cell = document.createElement('div');
-    cell.className = 'cg-h';
+    if (i === 0) {
+      cell.className = 'cg-h cg-label';
+    } else {
+      cell.className = 'cg-h';
+    }
     cell.textContent = h;
     container.appendChild(cell);
   });
 
-  // 2. Row 1: A, [blank], [blank], B, C, D, E, F, G, H
-  const row1 = ['A', '', '', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-  row1.forEach(ch => {
-    const cell = document.createElement('div');
-    cell.className = 'cg-c';
-    cell.textContent = ch;
-    if (ch === '') cell.style.background = 'rgba(0,0,0,0.08)'; // Fond grisé léger pour indiquer les colonnes de décalage
-    container.appendChild(cell);
-  });
+  const rows = [
+    ['1', 'A', 'B', 'C', 'D', 'E'],
+    ['2', 'F', 'G', 'H', 'I', 'J'],
+    ['3', 'K', 'L', 'M', 'N', 'O'],
+    ['4', 'P', 'Q', 'R', 'S', 'T'],
+    ['5', 'U', 'V', 'X', 'Y', 'Z']
+  ];
 
-  // 3. Row 8: I J K L M N O P Q R
-  const row8 = ['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R'];
-  row8.forEach(ch => {
-    const cell = document.createElement('div');
-    cell.className = 'cg-c';
-    cell.textContent = ch;
-    container.appendChild(cell);
-  });
-
-  // 4. Row 2: S T U V W X Y Z . /
-  const row2 = ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '.', '/'];
-  row2.forEach(ch => {
-    const cell = document.createElement('div');
-    cell.className = 'cg-c';
-    cell.textContent = ch;
-    container.appendChild(cell);
+  rows.forEach(row => {
+    row.forEach((ch, i) => {
+      const cell = document.createElement('div');
+      if (i === 0) {
+        cell.className = 'cg-h cg-label';
+      } else {
+        cell.className = 'cg-c';
+      }
+      cell.textContent = ch;
+      container.appendChild(cell);
+    });
   });
 }
 
@@ -2371,7 +2400,6 @@ window.addEventListener('resize', () => { updateShadows(); });
    INITIALISATION
 ────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  updateOrientationForceLandscape();
   initSpotlight();
   buildCipherGrid();
   initCarnetEvents();
@@ -2395,73 +2423,3 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-/* ──────────────────────────────────────
-   GESTION DE L'ORIENTATION (MOBILE LANDSCAPE)
-────────────────────────────────────── */
-function updateOrientationForceLandscape() {
-  const isPortrait = window.innerHeight > window.innerWidth;
-  const body = document.body;
-  if (!body) return;
-
-  if (!isPortrait) {
-    // Mode paysage naturel : aucun forçage
-    body.classList.remove('force-landscape-left', 'force-landscape-right');
-    body.style.width = '';
-    body.style.height = '';
-    body.style.transform = '';
-    body.style.transformOrigin = '';
-    body.style.position = '';
-    body.style.top = '';
-    body.style.left = '';
-    return;
-  }
-
-  // Mode portrait : forcer la rotation à 90°
-  let rotationType = 'left'; // Par défaut vers la gauche (-90deg)
-
-  // Si on a détecté une rotation physique via le gyroscope
-  if (window._lastDeviceGamma !== undefined) {
-    // Si l'appareil est penché vers la droite (gamma > 15)
-    if (window._lastDeviceGamma > 15) {
-      rotationType = 'right';
-    } 
-    // Si l'appareil est penché vers la gauche (gamma < -15)
-    else if (window._lastDeviceGamma < -15) {
-      rotationType = 'left';
-    }
-  }
-
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-
-  if (rotationType === 'left') {
-    body.classList.remove('force-landscape-right');
-    body.classList.add('force-landscape-left');
-    body.style.width = h + 'px';
-    body.style.height = w + 'px';
-    body.style.transform = 'rotate(-90deg)';
-    body.style.transformOrigin = 'top left';
-    body.style.position = 'absolute';
-    body.style.top = h + 'px';
-    body.style.left = '0px';
-  } else {
-    body.classList.remove('force-landscape-left');
-    body.classList.add('force-landscape-right');
-    body.style.width = h + 'px';
-    body.style.height = w + 'px';
-    body.style.transform = 'rotate(90deg)';
-    body.style.transformOrigin = 'top left';
-    body.style.position = 'absolute';
-    body.style.top = '0px';
-    body.style.left = w + 'px';
-  }
-}
-
-window.addEventListener('deviceorientation', (e) => {
-  if (e.gamma !== null) {
-    window._lastDeviceGamma = e.gamma;
-    updateOrientationForceLandscape();
-  }
-});
-window.addEventListener('resize', updateOrientationForceLandscape);
-window.addEventListener('orientationchange', updateOrientationForceLandscape);
