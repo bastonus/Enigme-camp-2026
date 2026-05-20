@@ -1488,27 +1488,40 @@ let typewriterAutoTyping = false;
 
 function openTypewriter() {
   const paper = document.getElementById('typewriter-paper');
-  if (paper) {
-    paper.textContent = "";
-  }
-  
-  // Rétablir le bouton de fermeture et l'aide
   const closeBtn = document.querySelector('#modal-machine .modal-close');
-  if (closeBtn) closeBtn.style.display = 'block';
-  
   const hint = document.getElementById('typewriter-hint');
-  if (hint) {
-    hint.textContent = "Saisissez le lieu de départ décrypté au clavier pour lancer la transmission...";
-    hint.style.display = 'block';
+
+  if (State.typewriterDecrypted) {
+    // Si l'énigme est déjà résolue, on ne vide pas la feuille pour garder les informations
+    if (hint) {
+      hint.textContent = "Ordre de mission décrypté. Fermez la machine pour continuer.";
+      hint.style.display = 'block';
+    }
+  } else {
+    if (paper) {
+      paper.textContent = "";
+    }
+    if (hint) {
+      hint.textContent = "Saisissez le lieu de départ décrypté au clavier pour lancer la transmission...";
+      hint.style.display = 'block';
+    }
   }
+  
+  // Rétablir le bouton de fermeture
+  if (closeBtn) closeBtn.style.display = 'block';
   
   openModal('modal-machine');
   typewriterActive = true;
   typewriterAutoTyping = false;
   
-  // Placer le focus
+  // Placer le focus et scroller en bas si déjà décrypté
   setTimeout(() => {
-    if (paper) paper.focus();
+    if (paper) {
+      paper.focus();
+      if (State.typewriterDecrypted) {
+        paper.scrollTop = paper.scrollHeight;
+      }
+    }
   }, 100);
 }
 
