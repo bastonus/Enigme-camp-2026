@@ -99,7 +99,7 @@ DATE : ${getGameDate(0, true, false)} — 21H30
 
 ÉMETTEUR CLANDESTIN DU RÉSEAU AS PRÊT POUR RÉCEPTION.`;
 
-let introIdx = 0, introTimer = null, missionStarted = false;
+let introIdx = 0, introTimer = null, missionStarted = false, introAnimationFinished = false;
 
 function enterFullscreen() {
   const elem = document.documentElement;
@@ -118,7 +118,7 @@ function handleIntroClick(e) {
   if (!missionStarted) {
     startMission();
   } else if (document.getElementById('intro-screen').style.display !== 'none') {
-    skipIntro();
+    skipIntro(e);
   }
 }
 
@@ -149,8 +149,12 @@ function runIntro() {
     AudioManager.startIntroTypewriter();
   }
   if (introIdx >= INTRO_TEXT.length) {
+    introAnimationFinished = true;
     const skipBtn = document.getElementById('intro-skip');
-    if (skipBtn) skipBtn.style.color = '#a89060';
+    if (skipBtn) {
+      skipBtn.style.color = '#a89060';
+      skipBtn.textContent = "[ APPUYER SUR ENTRÉE OU CLIQUER POUR DÉBUTER LA MISSION ]";
+    }
     AudioManager.stopIntroTypewriter();
     return;
   }
@@ -162,13 +166,35 @@ function runIntro() {
   introTimer = setTimeout(runIntro, delay);
 }
 
-function skipIntro() {
+function skipIntro(e) {
+  if (e && typeof e.stopPropagation === 'function') {
+    e.stopPropagation();
+  }
+  if (!introAnimationFinished) {
+    finishIntroAnimation();
+  } else {
+    leaveIntroScreen();
+  }
+}
+
+function finishIntroAnimation() {
   clearTimeout(introTimer);
   AudioManager.stopIntroTypewriter();
   
   enterFullscreen();
   
   document.getElementById('teletype-text').textContent = PREAMBLE + "\n\n--- DÉBUT DE LA TRANSMISSION ---\n\n" + INTRO_TEXT;
+  introAnimationFinished = true;
+  
+  const skipBtn = document.getElementById('intro-skip');
+  if (skipBtn) {
+    skipBtn.style.color = '#a89060';
+    skipBtn.textContent = "[ APPUYER SUR ENTRÉE OU CLIQUER POUR DÉBUTER LA MISSION ]";
+  }
+}
+
+function leaveIntroScreen() {
+  enterFullscreen();
   showScene();
 }
 
