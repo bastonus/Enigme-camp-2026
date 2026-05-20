@@ -295,37 +295,44 @@ function openCigareBox() {
     cigar.style.left       = '22.1%';
     
     cigar.style.transition = 'none';
-    cigar.style.opacity    = '0';
-    // Part caché plus bas dans l'axe -12deg
-    cigar.style.transform  = 'rotate(-12deg) translateY(2vw)';
-    
     if (flame) {
       flame.style.display    = 'block';
       flame.style.zIndex     = '12';
       flame.style.transition = 'none';
-      flame.style.opacity    = '0';
-      flame.style.transform  = cigar.style.transform;
     }
-    
-    // Utiliser requestAnimationFrame double pour s'assurer que le navigateur a pris en compte display: block
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        cigar.style.transition = 'transform 0.9s cubic-bezier(0.25,0.8,0.25,1), opacity 0.6s ease';
-        cigar.style.opacity    = '1';
-        cigar.style.transform  = 'rotate(-12deg) translateY(-8vw)';
-        
-        if (flame) {
-          flame.style.transition = 'transform 0.9s cubic-bezier(0.25,0.8,0.25,1), opacity 0.6s ease';
-          flame.style.opacity    = '1';
-          flame.style.transform  = cigar.style.transform;
-        }
-      });
-    });
 
-    setTimeout(() => { 
-      cigar.style.zIndex = '35'; 
-      if (flame) flame.style.zIndex = '34';
-    }, 900);
+    const duration = 900;
+    const start = performance.now();
+    const fromY = 2; // vw
+    const toY = -8; // vw
+
+    function step(now) {
+      const elapsed = now - start;
+      let progress = Math.min(1, elapsed / duration);
+      
+      // Easing cubic ease-out pour un mouvement naturel
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+      const currentY = fromY + (toY - fromY) * easedProgress;
+      const currentOpacity = Math.min(1, progress * 1.6); // fade in complet vers 60% de l'animation
+
+      cigar.style.transform = `rotate(-12deg) translateY(${currentY}vw)`;
+      cigar.style.opacity = currentOpacity.toString();
+
+      if (flame) {
+        flame.style.transform = cigar.style.transform;
+        flame.style.opacity = currentOpacity.toString();
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        cigar.style.zIndex = '35';
+        if (flame) flame.style.zIndex = '34';
+      }
+    }
+
+    requestAnimationFrame(step);
   }
 }
 
