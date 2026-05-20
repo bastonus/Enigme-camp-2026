@@ -2529,13 +2529,40 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(updateShadows, 100);
 
   document.addEventListener('keydown', e => {
+    // Éviter de basculer en plein écran si l'utilisateur saisit du texte dans un champ
+    const activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+      return;
+    }
+
     if (e.key === 'Enter') {
-      if (!missionStarted) {
-        startMission();
-      } else if (document.getElementById('intro-screen').style.display !== 'none') {
-        skipIntro();
+      if (e.altKey) {
+        toggleFullscreenKeyboard();
+      } else {
+        if (!missionStarted) {
+          startMission();
+        } else if (document.getElementById('intro-screen').style.display !== 'none') {
+          skipIntro();
+        }
       }
+    } else if (e.key.toLowerCase() === 'f') {
+      toggleFullscreenKeyboard();
     }
   });
+
+  function toggleFullscreenKeyboard() {
+    const isFull = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+    if (isFull) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    } else {
+      enterFullscreen();
+    }
+  }
 });
 
