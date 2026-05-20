@@ -38,12 +38,12 @@
 <!-- ═══════════════════════════════════════ -->
 <div id="intro-screen" onclick="handleIntroClick(event)">
   <div id="teletype-box" style="position:relative; width:min(700px, 90vw); margin:auto; text-align:left;">
-    <div id="teletype-text">ORDRE DE MISSION N°4
-====================
-Secteur : Périgord Vert
-Date : 4 août 1944
+    <div id="teletype-text">ÉTAT-MAJOR DES F.F.I. — SECTEUR PÉRIGORD VERT
+ORDRE DE MISSION N°4 — CONFIDENTIEL
+=============================================
+DATE : <span id="dynamic-teletype-date">20 MAI 1944</span> — 21H30
 
-Émetteur clandestin du réseau AS prêt pour réception.</div><span id="teletype-cursor"></span>
+ÉMETTEUR CLANDESTIN DU RÉSEAU AS PRÊT POUR RÉCEPTION.</div><span id="teletype-cursor"></span>
     
     <!-- Bouton de démarrage sobre style terminal -->
     <div id="intro-start-prompt" style="margin-top:25px; font-family:'VT323', monospace; text-align:center;">
@@ -257,7 +257,7 @@ Date : 4 août 1944
   <div class="ticket">
     <span class="ticket-close" onclick="document.getElementById('ticket-overlay').classList.remove('open')">✕</span>
     <div class="ticket-header">TRAMWAYS DE PÉRIGUEUX — 2ème CLASSE</div>
-    <p><em>DANDY à FACTEUR — 4 août 44</em></p>
+    <p><em>DANDY à FACTEUR — <span id="dynamic-ticket-date">4 août 44</span></em></p>
     <p>Écoute ce soir 21h45 sur la BBC.<br>Fréquence habituelle.<br>Le message sera pour nous.<br>— V.</p>
     <div class="morse-line">.-.. . ...  ... .- -. --. .-.. --- - ...<br><small style="color:#8a7040;font-size:.75rem">[déchiffre avant de jeter]</small></div>
   </div>
@@ -540,7 +540,7 @@ Date : 4 août 1944
             (Cliquez sur la carte pour la retourner et voir le village au dos)
           </p>
         </div>
-        <div style="font-family:'VT323',monospace; color:#888; font-size:2.5cqw;">5 AOÛT 1944 — 00h17</div>
+        <div id="dynamic-victory-date" style="font-family:'VT323',monospace; color:#888; font-size:2.5cqw;">5 AOÛT 1944 — 00h17</div>
       </div>
 
       <!-- Moitié droite : Adresse / Enregistrement -->

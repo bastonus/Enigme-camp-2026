@@ -66,16 +66,21 @@ const HINTS = [
 /* ──────────────────────────────────────
    INTRO — TÉLÉTYPE
 ────────────────────────────────────── */
+function getGameDate(offsetDays = 0, upper = false, shortYear = false) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const day = d.getDate();
+  const months = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+  let month = months[d.getMonth()];
+  if (upper) month = month.toUpperCase();
+  const year = shortYear ? "44" : "1944";
+  return `${day === 1 ? "1er" : day} ${month} ${year}`;
+}
+
 const INTRO_TEXT =
-`ÉTAT-MAJOR DES F.F.I. — SECTEUR PÉRIGORD VERT
-ORDRE DE MISSION N°4 — CONFIDENTIEL
-─────────────────────────────────────────────
-
-DATE : 4 AOÛT 1944 — 21H30
-
-Nos réseaux ont perdu le contact avec le lieutenant ROLAND GRANDOU.
+`Nos réseaux ont perdu le contact avec le lieutenant ROLAND GRANDOU.
 Son dernier message Morse indiquait un point de parachutage
-allié prévu pour cette nuit. Il n'a pas pu transmettre
+allié prévu pour cet été. Il n'a pas pu transmettre
 les coordonnées complètes.
 
 Vous avez accès à son poste de transmission.
@@ -86,12 +91,12 @@ Ne faites pas de bruit.
 
                         — WHISKY`;
 
-const PREAMBLE = `ORDRE DE MISSION N°4
-====================
-Secteur : Périgord Vert
-Date : 4 août 1944
+const PREAMBLE = `ÉTAT-MAJOR DES F.F.I. — SECTEUR PÉRIGORD VERT
+ORDRE DE MISSION N°4 — CONFIDENTIEL
+=============================================
+DATE : ${getGameDate(0, true, false)} — 21H30
 
-Émetteur clandestin du réseau AS prêt pour réception.`;
+ÉMETTEUR CLANDESTIN DU RÉSEAU AS PRÊT POUR RÉCEPTION.`;
 
 let introIdx = 0, introTimer = null, missionStarted = false;
 function handleIntroClick(e) {
@@ -1592,7 +1597,7 @@ const MAGIC_REVEAL_TEXT =
 `
 ──────────────────────
 ORDRE DE MISSION DE T.M. (TOMMY MACPHERSON)
-5 AOÛT 1944 — 00H17
+${getGameDate(0, true, false)} — 00H17
 
 A TOUS LES RESISTANTS DE L'AS ET DES FTP :
 LE LIEUTENANT ROLAND GRANDOU A ETE FUSILLE PAR LA GESTAPO.
@@ -1602,6 +1607,18 @@ SON RETOUR D'INSPECTION COMMENÇAIT DEPUIS LE MAQUIS DE MONTIGNAC. RETRACEZ SON 
 VIVE LA FRANCE.
 
 — TOMMY —`;
+
+// Mise à jour des dates statiques dans le DOM (index.html) au chargement
+document.addEventListener('DOMContentLoaded', () => {
+  const teletypeDate = document.getElementById('dynamic-teletype-date');
+  if (teletypeDate) teletypeDate.textContent = getGameDate(0, true, false);
+
+  const ticketDate = document.getElementById('dynamic-ticket-date');
+  if (ticketDate) ticketDate.textContent = getGameDate(0, false, true);
+  
+  const victoryDate = document.getElementById('dynamic-victory-date');
+  if (victoryDate) victoryDate.textContent = getGameDate(0, true, false) + " — 00h17";
+});
 
 function triggerMagicVictoryTyping() {
   typewriterAutoTyping = true;
