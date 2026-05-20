@@ -166,10 +166,28 @@ function initSpotlight() {
   const spot   = document.getElementById('spotlight');
   const cursor = document.getElementById('custom-cursor');
   document.addEventListener('mousemove', e => {
-    spot.style.left   = e.clientX + 'px';
-    spot.style.top    = e.clientY + 'px';
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top  = e.clientY + 'px';
+    let posX = e.clientX;
+    let posY = e.clientY;
+    
+    const body = document.body;
+    if (body) {
+      if (body.classList.contains('force-landscape-left')) {
+        const h = window.innerHeight;
+        posX = h - e.clientY;
+        posY = e.clientX;
+      } else if (body.classList.contains('force-landscape-right')) {
+        const w = window.innerWidth;
+        posX = e.clientY;
+        posY = w - e.clientX;
+      }
+    }
+    
+    spot.style.left   = posX + 'px';
+    spot.style.top    = posY + 'px';
+    if (cursor) {
+      cursor.style.left = posX + 'px';
+      cursor.style.top  = posY + 'px';
+    }
   });
 }
 
@@ -2113,8 +2131,15 @@ const OBJECT_HEIGHTS = {
 let shadowAnimationId = null;
 
 function updateShadows() {
+  const isPortrait = window.innerHeight > window.innerWidth;
   const canvas = document.getElementById('shadow-canvas');
   if (!canvas) return;
+  
+  if (isPortrait) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   const ctx = canvas.getContext('2d');
@@ -2346,6 +2371,7 @@ window.addEventListener('resize', () => { updateShadows(); });
    INITIALISATION
 ────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+  updateOrientationForceLandscape();
   initSpotlight();
   buildCipherGrid();
   initCarnetEvents();
@@ -2368,3 +2394,74 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+/* ──────────────────────────────────────
+   GESTION DE L'ORIENTATION (MOBILE LANDSCAPE)
+────────────────────────────────────── */
+function updateOrientationForceLandscape() {
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const body = document.body;
+  if (!body) return;
+
+  if (!isPortrait) {
+    // Mode paysage naturel : aucun forçage
+    body.classList.remove('force-landscape-left', 'force-landscape-right');
+    body.style.width = '';
+    body.style.height = '';
+    body.style.transform = '';
+    body.style.transformOrigin = '';
+    body.style.position = '';
+    body.style.top = '';
+    body.style.left = '';
+    return;
+  }
+
+  // Mode portrait : forcer la rotation à 90°
+  let rotationType = 'left'; // Par défaut vers la gauche (-90deg)
+
+  // Si on a détecté une rotation physique via le gyroscope
+  if (window._lastDeviceGamma !== undefined) {
+    // Si l'appareil est penché vers la droite (gamma > 15)
+    if (window._lastDeviceGamma > 15) {
+      rotationType = 'right';
+    } 
+    // Si l'appareil est penché vers la gauche (gamma < -15)
+    else if (window._lastDeviceGamma < -15) {
+      rotationType = 'left';
+    }
+  }
+
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+
+  if (rotationType === 'left') {
+    body.classList.remove('force-landscape-right');
+    body.classList.add('force-landscape-left');
+    body.style.width = h + 'px';
+    body.style.height = w + 'px';
+    body.style.transform = 'rotate(-90deg)';
+    body.style.transformOrigin = 'top left';
+    body.style.position = 'absolute';
+    body.style.top = h + 'px';
+    body.style.left = '0px';
+  } else {
+    body.classList.remove('force-landscape-left');
+    body.classList.add('force-landscape-right');
+    body.style.width = h + 'px';
+    body.style.height = w + 'px';
+    body.style.transform = 'rotate(90deg)';
+    body.style.transformOrigin = 'top left';
+    body.style.position = 'absolute';
+    body.style.top = '0px';
+    body.style.left = w + 'px';
+  }
+}
+
+window.addEventListener('deviceorientation', (e) => {
+  if (e.gamma !== null) {
+    window._lastDeviceGamma = e.gamma;
+    updateOrientationForceLandscape();
+  }
+});
+window.addEventListener('resize', updateOrientationForceLandscape);
+window.addEventListener('orientationchange', updateOrientationForceLandscape);

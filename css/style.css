@@ -129,12 +129,7 @@ html, body {
   letter-spacing: 2px;
 }
 
-/* On bloque les écrans de type mobile et tablette tactile étroite */
-@media (max-width: 768px), (pointer: coarse) and (max-width: 1024px) {
-  #mobile-warning {
-    display: flex !important;
-  }
-}
+/* La gestion du mode paysage forcé et de l'adaptation gyroscope sur mobile est gérée dynamiquement en JS */
 
 /* ══════════════════════════════════════════
    ÉCRAN D'INTRODUCTION
