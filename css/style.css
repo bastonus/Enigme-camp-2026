@@ -490,6 +490,21 @@ html, body {
   height: 100%;
   display: block;
 }
+#luger-stain {
+  position: absolute;
+  top: 46%;
+  left: 46%;
+  width: 13vw;
+  height: 13vw;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  pointer-events: none;
+  display: none;
+  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.45));
+}
+.lamp-off #luger-stain {
+  display: block;
+}
 
 #obj-boussole {
   width: 15.05%; top: 25.82%; left: 66.43%;

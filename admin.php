@@ -5,11 +5,18 @@
  * Left-aligned, vintage typewriter style showing all successful agents.
  */
 
+// Prevent Cloudflare and browser caching
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+
 // Set timezone to match local scouts context
 date_default_timezone_set('Europe/Paris');
 
 $dbPath = __DIR__ . '/data/results.json';
 $results = [];
+$highlightId = isset($_GET['highlight']) ? trim((string)$_GET['highlight']) : '';
 
 if (file_exists($dbPath)) {
     $content = file_get_contents($dbPath);
@@ -18,6 +25,32 @@ if (file_exists($dbPath)) {
         $results = $decoded;
     }
 }
+
+// Helper function to parse durations like "1m 24s" into total seconds for correct sorting
+function parseDurationToSeconds($durationStr) {
+    if (empty($durationStr) || $durationStr === '—' || $durationStr === 'N/A') {
+        return 999999;
+    }
+    if (preg_match('/(?:(\d+)\s*m)?\s*(?:(\d+)\s*s)?/i', $durationStr, $matches)) {
+        $minutes = isset($matches[1]) && $matches[1] !== '' ? (int)$matches[1] : 0;
+        $seconds = isset($matches[2]) && $matches[2] !== '' ? (int)$matches[2] : 0;
+        return ($minutes * 60) + $seconds;
+    }
+    return 999999;
+}
+
+// Sort all results dynamically by duration (completion time) ascending
+usort($results, function($a, $b) {
+    $timeA = parseDurationToSeconds(isset($a['duration']) ? $a['duration'] : '');
+    $timeB = parseDurationToSeconds(isset($b['duration']) ? $b['duration'] : '');
+    return $timeA - $timeB;
+});
+
+// Dynamically reassign ranks based on the sorted completion times
+foreach ($results as $index => &$res) {
+    $res['rank'] = $index + 1;
+}
+unset($res);
 
 // Optional CSV Export triggered by GET query
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
@@ -28,10 +61,11 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     // Write UTF-8 BOM for correct Excel encoding
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
     
-    fputcsv($output, ['Ordre / Rang', 'Prénom', 'Nom de famille', 'Date d\'enregistrement']);
+    fputcsv($output, ['Ordre / Rang', 'Temps de réalisation', 'Prénom', 'Nom de famille', 'Date d\'enregistrement']);
     foreach ($results as $res) {
         fputcsv($output, [
             $res['rank'],
+            isset($res['duration']) ? $res['duration'] : 'N/A',
             $res['firstname'],
             $res['lastname'],
             $res['timestamp']
@@ -49,7 +83,24 @@ $lastRegistration = $totalAgents > 0 ? $results[$totalAgents - 1]['timestamp'] :
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Cache prevention meta tags -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>ARCHIVES CONFIDENTIELLES — PC CUBJAC 1944</title>
+  
+  <!-- Automatic cache-busting redirection to bypass aggressive edge caches -->
+  <script>
+    (function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const t = parseInt(urlParams.get('t'), 10);
+      const now = Date.now();
+      if (!t || (now - t) > 3000) {
+        urlParams.set('t', now);
+        window.location.replace(window.location.pathname + '?' + urlParams.toString());
+      }
+    })();
+  </script>
   
   <!-- Google Fonts for authentic look -->
   <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
@@ -322,6 +373,43 @@ $lastRegistration = $totalAgents > 0 ? $results[$totalAgents - 1]['timestamp'] :
       color: #B8A070;
     }
     
+    /* Highlighted Mission Duration style */
+    .duration-cell {
+      font-weight: bold;
+      font-family: 'VT323', monospace;
+      font-size: 1.45rem;
+      color: #000 !important; /* Black text */
+      background: #B8A070 !important; /* Theme-beige background */
+      text-align: center;
+      letter-spacing: 0.5px;
+      border: 1px solid #111 !important;
+      padding: 0.4rem 0.8rem;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.55);
+    }
+    
+    /* Highlighted row styling for the user's own score */
+    .my-score-row {
+      background: rgba(184, 160, 112, 0.15) !important;
+      border: 1px solid #B8A070 !important;
+      animation: pulse-highlight 2.5s infinite ease-in-out;
+    }
+    
+    @keyframes pulse-highlight {
+      0% { box-shadow: 0 0 4px rgba(184, 160, 112, 0.2); }
+      50% { box-shadow: 0 0 12px rgba(184, 160, 112, 0.5); }
+      100% { box-shadow: 0 0 4px rgba(184, 160, 112, 0.2); }
+    }
+    
+    .vous-marker {
+      font-size: 0.75rem;
+      color: #FFD700;
+      margin-left: 6px;
+      vertical-align: middle;
+      font-family: 'Special Elite', cursive;
+      letter-spacing: 0;
+      text-shadow: 0 0 3px rgba(255, 215, 0, 0.4);
+    }
+    
     .no-results {
       padding: 3rem 1rem;
       text-align: left;
@@ -410,17 +498,28 @@ $lastRegistration = $totalAgents > 0 ? $results[$totalAgents - 1]['timestamp'] :
       <table class="archive-table" id="archive-table">
         <thead>
           <tr>
-            <th style="width: 15%;">Ordre</th>
-            <th style="width: 30%;">Prénom</th>
-            <th style="width: 30%;">Nom</th>
-            <th style="width: 25%;">Heure d'Enregistrement</th>
+            <th style="width: 10%;">Ordre</th>
+            <th style="width: 20%;">Durée de mission</th>
+            <th style="width: 20%;">Prénom</th>
+            <th style="width: 20%;">Nom</th>
+            <th style="width: 30%;">Heure d'Enregistrement</th>
           </tr>
         </thead>
         <tbody>
           <?php if ($totalAgents > 0): ?>
             <?php foreach ($results as $res): ?>
-              <tr class="agent-row">
-                <td class="rank-cell">#<?= sprintf('%02d', $res['rank']) ?></td>
+              <?php 
+                $isMyScore = (!empty($highlightId) && isset($res['id']) && $res['id'] === $highlightId);
+                $rowClass = 'agent-row' . ($isMyScore ? ' my-score-row' : '');
+              ?>
+              <tr class="<?= $rowClass ?>" <?= $isMyScore ? 'id="my-score-marker"' : '' ?>>
+                <td class="rank-cell">
+                  #<?= sprintf('%02d', $res['rank']) ?>
+                  <?php if ($isMyScore): ?>
+                    <span class="vous-marker">(VOUS)</span>
+                  <?php endif; ?>
+                </td>
+                <td class="duration-cell"><?= htmlspecialchars(isset($res['duration']) && $res['duration'] !== '' ? $res['duration'] : '—', ENT_QUOTES, 'UTF-8') ?></td>
                 <td class="firstname-cell"><?= htmlspecialchars($res['firstname'], ENT_QUOTES, 'UTF-8') ?></td>
                 <td class="lastname-cell"><?= htmlspecialchars($res['lastname'], ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars($res['timestamp'], ENT_QUOTES, 'UTF-8') ?></td>
@@ -428,7 +527,7 @@ $lastRegistration = $totalAgents > 0 ? $results[$totalAgents - 1]['timestamp'] :
             <?php endforeach; ?>
           <?php else: ?>
             <tr id="empty-row">
-              <td colspan="4" class="no-results">
+              <td colspan="5" class="no-results">
                 📜 Aucun rapport reçu à ce jour. Le canal est silencieux... En attente du premier agent de liaison.
               </td>
             </tr>
@@ -476,7 +575,7 @@ $lastRegistration = $totalAgents > 0 ? $results[$totalAgents - 1]['timestamp'] :
           emptySearchRow = document.createElement('tr');
           emptySearchRow.id = 'empty-search-row';
           emptySearchRow.innerHTML = `
-            <td colspan="4" class="no-results" style="color: #B8A070;">
+            <td colspan="5" class="no-results" style="color: #B8A070;">
               ❌ Aucun résistant ne correspond à votre recherche.
             </td>
           `;
@@ -486,6 +585,16 @@ $lastRegistration = $totalAgents > 0 ? $results[$totalAgents - 1]['timestamp'] :
         emptySearchRow.remove();
       }
     }
+    
+    // Auto-scroll to my-score-marker row smoothly when the page loads
+    window.addEventListener('DOMContentLoaded', () => {
+      const marker = document.getElementById('my-score-marker');
+      if (marker) {
+        setTimeout(() => {
+          marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+    });
   </script>
 </body>
 </html>

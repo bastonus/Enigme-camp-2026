@@ -7,6 +7,24 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
+// Prevent Cloudflare / browser caching
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
+// Helper function to parse durations like "1m 24s" into total seconds for correct sorting
+function parseDurationToSeconds($durationStr) {
+    if (empty($durationStr) || $durationStr === '—' || $durationStr === 'N/A') {
+        return 999999;
+    }
+    if (preg_match('/(?:(\d+)\s*m)?\s*(?:(\d+)\s*s)?/i', $durationStr, $matches)) {
+        $minutes = isset($matches[1]) && $matches[1] !== '' ? (int)$matches[1] : 0;
+        $seconds = isset($matches[2]) && $matches[2] !== '' ? (int)$matches[2] : 0;
+        return ($minutes * 60) + $seconds;
+    }
+    return 999999;
+}
+
 // Align with the French Scouting event timezone
 date_default_timezone_set('Europe/Paris');
 
@@ -65,15 +83,32 @@ if (flock($fp, LOCK_EX)) {
         $decoded = json_decode($content, true);
         if (is_array($decoded)) {
             $results = $decoded;
+            // Clean up data: ensure unique ID exists and redundant ranks are stripped
+            foreach ($results as &$entry) {
+                if (empty($entry['id'])) {
+                    $entry['id'] = uniqid('agent_', true);
+                }
+                if (isset($entry['rank'])) {
+                    unset($entry['rank']);
+                }
+            }
+            unset($entry);
         }
     }
     
     // Check if player has already submitted to avoid duplicates
     $isDuplicate = false;
-    foreach ($results as $res) {
-        if (strcasecmp($res['firstname'], $firstnameClean) === 0 && strcasecmp($res['lastname'], $lastnameClean) === 0) {
-            $isDuplicate = true;
-            break;
+    $isTest = (stripos($firstnameClean, 'test') !== false) || 
+              (stripos($firstnameClean, 'admin') !== false) || 
+              (stripos($lastnameClean, 'test') !== false) || 
+              (stripos($lastnameClean, 'admin') !== false);
+
+    if (!$isTest) {
+        foreach ($results as $res) {
+            if (strcasecmp($res['firstname'], $firstnameClean) === 0 && strcasecmp($res['lastname'], $lastnameClean) === 0) {
+                $isDuplicate = true;
+                break;
+            }
         }
     }
     
@@ -87,9 +122,31 @@ if (flock($fp, LOCK_EX)) {
         ]);
         exit;
     }
-    
-    // Determine order rank (sequence order: 1st, 2nd, 3rd...)
-    $rank = count($results) + 1;
+
+    // IP-based anti-cheat check to prevent multiple submissions from the same station
+    $clientIp = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+    $isDuplicateIp = false;
+    if (!$isTest) {
+        foreach ($results as $res) {
+            if (isset($res['ip']) && $res['ip'] === $clientIp) {
+                // Safe developer/localhost exception
+                if ($clientIp !== '127.0.0.1' && $clientIp !== '::1') {
+                    $isDuplicateIp = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if ($isDuplicateIp) {
+        flock($fp, LOCK_UN);
+        fclose($fp);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Cette adresse IP a déjà transmis un rapport de mission. Une seule transmission par poste est autorisée.'
+        ]);
+        exit;
+    }
     
     // Precise millisecond timestamp parsing in Paris timezone
     if (empty($data['completion_time'])) {
@@ -106,15 +163,44 @@ if (flock($fp, LOCK_EX)) {
     $dateTime->setTimestamp($seconds);
     $dateTime->setTimezone(new DateTimeZone('Europe/Paris'));
     $timestampFormatted = $dateTime->format('d/m/Y H:i:s') . '.' . sprintf('%03d', $milliseconds);
+
+    $duration = isset($data['duration']) ? trim((string)$data['duration']) : '';
+    if ($duration === '') {
+        $duration = '—';
+    }
     
+    $newEntryId = uniqid('agent_', true);
+
     $newEntry = [
-        'rank' => $rank,
+        'id' => $newEntryId,
         'firstname' => $firstnameClean,
         'lastname' => $lastnameClean,
-        'timestamp' => $timestampFormatted
+        'duration' => $duration,
+        'timestamp' => $timestampFormatted,
+        'ip' => $clientIp
     ];
     
     $results[] = $newEntry;
+
+    // Sort all results dynamically by duration (completion time) ascending
+    usort($results, function($a, $b) {
+        $timeA = parseDurationToSeconds(isset($a['duration']) ? $a['duration'] : '');
+        $timeB = parseDurationToSeconds(isset($b['duration']) ? $b['duration'] : '');
+        return $timeA - $timeB;
+    });
+
+    // Reassign ranks temporarily for getting response rank, and remove rank property from saved format
+    $assignedRank = 1;
+    foreach ($results as $index => &$res) {
+        $tempRank = $index + 1;
+        if ($res['id'] === $newEntryId) {
+            $assignedRank = $tempRank;
+        }
+        if (isset($res['rank'])) {
+            unset($res['rank']);
+        }
+    }
+    unset($res);
     
     // Truncate and write updated results
     ftruncate($fp, 0);
@@ -128,8 +214,9 @@ if (flock($fp, LOCK_EX)) {
     
     echo json_encode([
         'success' => true,
-        'rank' => $rank,
-        'message' => 'Félicitations ! Votre réussite a été enregistrée avec succès. Vous êtes classé #' . $rank . '.'
+        'rank' => $assignedRank,
+        'id' => $newEntryId,
+        'message' => 'Félicitations ! Votre réussite a été enregistrée avec succès. Vous êtes classé #' . $assignedRank . '.'
     ]);
 } else {
     fclose($fp);

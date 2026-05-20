@@ -1,0 +1,58 @@
+[
+    {
+        "id": "agent_1",
+        "firstname": "Pierre-Albéric",
+        "lastname": "Théobald -alias WHISKY",
+        "duration": "1m 24s",
+        "timestamp": "20\/05\/2026 13:22:05.854",
+        "ip": "192.168.1.11"
+    },
+    {
+        "id": "agent_2",
+        "firstname": "Charles",
+        "lastname": "Aizpuru",
+        "duration": "2m 05s",
+        "timestamp": "20\/05\/2026 13:22:05.855",
+        "ip": "192.168.1.12"
+    },
+    {
+        "id": "agent_3",
+        "firstname": "Augustin",
+        "lastname": "Théobald",
+        "duration": "3m 12s",
+        "timestamp": "20\/05\/2026 13:50:04.039",
+        "ip": "192.168.1.13"
+    },
+    {
+        "id": "agent_4",
+        "firstname": "Jean",
+        "lastname": "Brachet",
+        "duration": "4m 45s",
+        "timestamp": "20\/05\/2026 14:38:35.740",
+        "ip": "192.168.1.14"
+    },
+    {
+        "id": "agent_5",
+        "firstname": "Bernard Vilain",
+        "lastname": "--alias DRILL E.F",
+        "duration": "5m 30s",
+        "timestamp": "20\/05\/2026 15:49:57.078",
+        "ip": "192.168.1.15"
+    },
+    {
+        "id": "agent_6a0dd18bd086d2.31349575",
+        "firstname": "Camargue",
+        "lastname": "E.E.",
+        "duration": "—",
+        "timestamp": "20\/05\/2026 17:20:53.454",
+        "ip": "46.193.66.176"
+    },
+    {
+        "id": "agent_6a0dd312b8def8.51221912",
+        "firstname": "Godefroy+Paul-Antoine+Louis-Charles",
+        "lastname": "Strich",
+        "duration": "—",
+        "timestamp": "20\/05\/2026 17:25:41.315",
+        "ip": "2a02:842b:ab:7401:e5cb:d2b7:50be:5157"
+    }
+]

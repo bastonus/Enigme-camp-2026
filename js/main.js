@@ -52,10 +52,11 @@ let currentMorseLetter = '';
 let decodedMorseWord = '';
 let letterTimer = null;
 let wordTimer = null;
+let chronoInterval = null;
 
 const HINTS = [
   "Commencez par déchiffrer la grille de substitution du carnet pour trouver la première clé secrète.",
-  "Éteignez la bougie pour révéler le viseur laser vert du Luger. Visez et tirez sur le cadre photo dans le noir pour briser le verre et découvrir la deuxième clé.",
+  "Éteignez la bougie pour révéler la tache de sang sous le Luger. Cliquez sur cette gâchette lumineuse dans le noir pour tirer sur le cadre photo, briser le verre et découvrir la deuxième clé.",
   "Ouvrez la boîte à cigares, faites rouler le cigare pour dévoiler la fréquence radio secrète (58.7 MHz). Allumez la radio sur cette fréquence pour entendre le code Morse secret et obtenir la troisième clé.",
   "Combinez les trois clés secrètes dans l'ordre conseillé par le carnet : [CARNET]-[RADIO]-[CADRE] pour former le mot de passe final.",
   "Tapez ce mot de passe sans espaces ni tirets (GRANDOUROGERLIBERTE) sur la Remington pour décrypter l'ordre de mission d'état-major.",
@@ -99,6 +100,19 @@ DATE : ${getGameDate(0, true, false)} — 21H30
 ÉMETTEUR CLANDESTIN DU RÉSEAU AS PRÊT POUR RÉCEPTION.`;
 
 let introIdx = 0, introTimer = null, missionStarted = false;
+
+function enterFullscreen() {
+  const elem = document.documentElement;
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen().catch(err => {
+      console.warn("Échec du passage en plein écran:", err);
+    });
+  } else if (elem.webkitRequestFullscreen) {
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) {
+    elem.msRequestFullscreen();
+  }
+}
 function handleIntroClick(e) {
   if (e.target.tagName.toLowerCase() === 'button') return;
   if (!missionStarted) {
@@ -111,6 +125,8 @@ function handleIntroClick(e) {
 function startMission() {
   if (missionStarted) return;
   missionStarted = true;
+  
+  enterFullscreen();
   
   const prompt = document.getElementById('intro-start-prompt');
   if (prompt) prompt.style.display = 'none';
@@ -149,6 +165,9 @@ function runIntro() {
 function skipIntro() {
   clearTimeout(introTimer);
   AudioManager.stopIntroTypewriter();
+  
+  enterFullscreen();
+  
   document.getElementById('teletype-text').textContent = PREAMBLE + "\n\n--- DÉBUT DE LA TRANSMISSION ---\n\n" + INTRO_TEXT;
   showScene();
 }
@@ -161,7 +180,33 @@ function showScene() {
     const scene = document.getElementById('scene');
     scene.classList.add('visible');
     State.startTime = Date.now();
+    startChrono();
   }, 1500);
+}
+
+function startChrono() {
+  const container = document.getElementById('chrono-container');
+  const valSpan = document.getElementById('chrono-val');
+  if (container) container.style.display = 'block';
+  
+  if (chronoInterval) clearInterval(chronoInterval);
+  
+  chronoInterval = setInterval(() => {
+    if (!State.startTime || State.victoryDone) return;
+    const elapsedMs = Date.now() - State.startTime;
+    const minutes = Math.floor(elapsedMs / 60000);
+    const seconds = Math.floor((elapsedMs % 60000) / 1000);
+    if (valSpan) {
+      valSpan.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+  }, 1000);
+}
+
+function stopChrono() {
+  if (chronoInterval) {
+    clearInterval(chronoInterval);
+    chronoInterval = null;
+  }
 }
 
 /* ──────────────────────────────────────
@@ -1166,7 +1211,7 @@ function initRapporteurKeyboard() {
 let lugerSlid = false;
 function slideLuger() {
   if (!State.lampOn) {
-    showToast("La croix verte indique la gâchette. Pressez la croix pour faire feu !");
+    showToast("La tache de sang sous le pistolet brille dans le noir et révèle la gâchette. Pressez-la pour faire feu !");
   } else {
     showToast("Un pistolet Luger P08 d'officier allemand... Le canon est froid.");
   }
@@ -1754,7 +1799,7 @@ function showToast(msg) {
 function shootLuger() {
   if (State.lampOn) return;
 
-  // Masquer temporairement la gâchette / croix verte pendant le tir pour éviter les clics multiples
+  // Masquer temporairement la gâchette / tache de sang pendant le tir pour éviter les clics multiples
   const laserContainer = document.getElementById('luger-laser-container');
   if (laserContainer) {
     laserContainer.style.display = 'none';
@@ -1988,6 +2033,7 @@ function mkFinalizeWord() {
     }
     State.victoryDone = true;
     State.completionTime = Date.now(); // Heure précise au millième de seconde de la fin de saisie de CUBJAC
+    stopChrono();
     updateRadioStatus('🎯 TRANSMISSION CUBJAC CONFIRMÉE !', true);
     setTimeout(() => showVictoryScreen(), 300);
   } else {
@@ -2129,6 +2175,12 @@ function registerVictory() {
     btn.style.opacity = '0.7';
   }
 
+  const startVal = State.startTime || Date.now();
+  const durationMs = (State.completionTime || Date.now()) - startVal;
+  const minutes = Math.floor(durationMs / 60000);
+  const seconds = Math.floor((durationMs % 60000) / 1000);
+  const durationFormatted = `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+
   fetch('save_result.php', {
     method: 'POST',
     headers: {
@@ -2137,16 +2189,18 @@ function registerVictory() {
     body: JSON.stringify({
       firstname: prenom,
       lastname: nom,
-      completion_time: State.completionTime || Date.now()
+      completion_time: State.completionTime || Date.now(),
+      duration: durationFormatted
     })
   })
   .then(response => response.json())
   .then(data => {
     if (data.success) {
       alert(data.message);
-      // Redirection vers le registre F.F.I. (admin.php) après 1 seconde
+      // Redirection vers le registre F.F.I. (admin.php) avec cache-buster et highlight après 1 seconde
       setTimeout(() => {
-        window.location.href = 'admin.php';
+        const highlightParam = data.id ? '&highlight=' + encodeURIComponent(data.id) : '';
+        window.location.href = 'admin.php?t=' + Date.now() + highlightParam;
       }, 1000);
     } else {
       alert("Erreur de transmission : " + data.error);
