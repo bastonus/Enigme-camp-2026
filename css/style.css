@@ -514,6 +514,7 @@ html, body {
 #obj-cle-morse {
   width: 15.09%; top: 24.04%; left: 51.26%;
   --rot: -6deg;
+  z-index: 40;
 }
 
 #obj-whisky {
@@ -1380,34 +1381,27 @@ html, body {
 /* ── Rapport de Localisation F.F.I. sur la table ── */
 #obj-rapport-ffi {
   position: absolute;
-  top: 20%;
-  left: 53%;
-  width: 10.5%;
+  top: 14%;
+  left: 40%;
+  width: 14.5%;
   aspect-ratio: 5.4 / 7.2;
   background: url('../page blanche.png') center/cover no-repeat;
   border: 1px solid rgba(0,0,0,0.15);
-  box-shadow: -3px 5px 8px rgba(0,0,0,0.6);
   padding: 1.2cqw;
   font-family: 'Special Elite', cursive;
   color: #1a0a00;
-  transform: rotate(8deg);
+  --rot: 8deg;
   z-index: 12; /* Au-dessus de la carte qui a z-index: 10 */
   cursor: pointer;
   transition: transform 0.55s cubic-bezier(0.25, 1, 0.2, 1),
               width 0.55s cubic-bezier(0.25, 1, 0.2, 1),
               top 0.55s cubic-bezier(0.25, 1, 0.2, 1),
               left 0.55s cubic-bezier(0.25, 1, 0.2, 1),
-              padding 0.55s cubic-bezier(0.25, 1, 0.2, 1),
-              box-shadow 0.3s;
+              padding 0.55s cubic-bezier(0.25, 1, 0.2, 1);
   container-type: inline-size;
   display: none; /* Apparaît après la résolution de la carte */
   overflow: hidden;
   box-sizing: border-box;
-}
-
-#obj-rapport-ffi:hover:not(.zoomed) {
-  transform: rotate(5deg) scale(1.05);
-  box-shadow: -5px 8px 12px rgba(0,0,0,0.7);
 }
 
 #obj-rapport-ffi.zoomed {
@@ -1416,7 +1410,8 @@ html, body {
   height: min(720px, 85vh);
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) rotate(-0.5deg);
+  transform: translate(-50%, -50%) rotate(-0.5deg) !important;
+  filter: none !important;
   z-index: 550; /* Au-dessus du reste */
   padding: 3.5rem 4rem;
   box-shadow: 0 15px 45px rgba(0,0,0,0.9);
