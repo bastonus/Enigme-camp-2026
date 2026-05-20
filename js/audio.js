@@ -286,7 +286,7 @@ const AudioManager = (() => {
   /* ── Stations Radio Historiques ── */
   const stations = [
     {
-      freq: 41.2,
+      freq: 41.0,
       file: 'La Radio française (1936-1939).mp3',
       audio: null,
       source: null,
@@ -294,7 +294,7 @@ const AudioManager = (() => {
       gain: null
     },
     {
-      freq: 43.3,
+      freq: 43.0,
       file: 'audio/Somewhere Over the Rainbow - The Wizard of Oz (18) Movie CLIP (1939) HD.wav',
       audio: null,
       source: null,
@@ -302,7 +302,7 @@ const AudioManager = (() => {
       gain: null
     },
     {
-      freq: 45.4,
+      freq: 45.0,
       file: 'la grand vadrouille (  marche hongroise)  1966  georges auric.mp3',
       audio: null,
       source: null,
@@ -310,7 +310,7 @@ const AudioManager = (() => {
       gain: null
     },
     {
-      freq: 47.5,
+      freq: 47.0,
       file: 'La Grande Vadrouille - Tea For Two.mp3',
       audio: null,
       source: null,
@@ -318,7 +318,7 @@ const AudioManager = (() => {
       gain: null
     },
     {
-      freq: 49.6,
+      freq: 49.0,
       file: '17 juin 1940 - Maréchal Pétain - Je fais à la France le don de ma personne - Armistice.mp3',
       audio: null,
       source: null,
@@ -326,7 +326,7 @@ const AudioManager = (() => {
       gain: null
     },
     {
-      freq: 51.7,
+      freq: 51.0,
       file: 'Le vrai visage de Mgr Lefebvre.mp3',
       audio: null,
       source: null,
@@ -334,7 +334,7 @@ const AudioManager = (() => {
       gain: null
     },
     {
-      freq: 53.8,
+      freq: 53.0,
       file: 'Nini Peau DChien.mp3',
       audio: null,
       source: null,
@@ -342,8 +342,16 @@ const AudioManager = (() => {
       gain: null
     },
     {
-      freq: 55.9,
+      freq: 55.0,
       file: 'Fernandel  Jai un beau chapeau  1946.mp3',
+      audio: null,
+      source: null,
+      filter: null,
+      gain: null
+    },
+    {
+      freq: 57.0,
+      file: 'audio/la_premiere_marine.mp3',
       audio: null,
       source: null,
       filter: null,
@@ -363,7 +371,7 @@ const AudioManager = (() => {
         return;
       }
 
-      const STATION_FREQS = [41.2, 43.3, 45.4, 47.5, 49.6, 51.7, 53.8, 55.9, 58.7];
+      const STATION_FREQS = [41.0, 43.0, 45.0, 47.0, 49.0, 51.0, 53.0, 55.0, 57.0, 58.7];
       const minDistance = Math.min(...STATION_FREQS.map(f => Math.abs(lastFreq - f)));
 
       // 1. Calculate static volume: static is loudest in between stations, fades out as we tune in
