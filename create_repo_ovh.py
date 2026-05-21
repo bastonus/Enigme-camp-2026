@@ -13,8 +13,13 @@ import json
 import time
 import getpass
 import logging
+import random
+import string
+import urllib.request
+import urllib.error
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple, List
+
 
 # Auto-installation de la bibliothèque paramiko si absente
 try:
@@ -233,8 +238,8 @@ chmod +x hooks/post-receive
             self.logger.error(f"Erreur lors de la configuration distante: {e}")
             return False
 
-    def configure_local_git_repository(self, hostname: str, username: str, bare_repo: str, key_path: str = ".ssh/id_prod") -> bool:
-        """Configure localement Git pour utiliser la clé SSH dédiée et ajoute le remote 'production'"""
+    def configure_local_git_repository(self, hostname: str, username: str, bare_repo: str, key_path: str = ".ssh/id_prod", remote_name: str = "production") -> bool:
+        """Configure localement Git pour utiliser la clé SSH dédiée et ajoute le remote spécifié"""
         try:
             # 1. S'assurer que le dépôt git local est initialisé
             if not os.path.exists(".git"):
@@ -244,26 +249,26 @@ chmod +x hooks/post-receive
                     return False
                 self.logger.info("Dépôt Git local initialisé.")
             
-            # 2. Configurer remote.production.sshCommand (portable)
+            # 2. Configurer remote.<remote_name>.sshCommand (portable)
             normalized_key_path = key_path.replace('\\', '/')
             ssh_command = f'ssh -i "$(git rev-parse --show-toplevel)/{normalized_key_path}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'
             
-            result = subprocess.run(['git', 'config', 'remote.production.sshCommand', ssh_command], capture_output=True, text=True)
+            result = subprocess.run(['git', 'config', f'remote.{remote_name}.sshCommand', ssh_command], capture_output=True, text=True)
             if result.returncode != 0:
-                self.logger.error(f"Échec de l'application de remote.production.sshCommand: {result.stderr}")
+                self.logger.error(f"Échec de l'application de remote.{remote_name}.sshCommand: {result.stderr}")
                 return False
-            self.logger.info("Configuration remote.production.sshCommand appliquée avec succès.")
+            self.logger.info(f"Configuration remote.{remote_name}.sshCommand appliquée avec succès.")
             
             # 3. Configurer le remote local
-            subprocess.run(['git', 'remote', 'remove', 'production'], capture_output=True)
+            subprocess.run(['git', 'remote', 'remove', remote_name], capture_output=True)
             
             remote_url = f"{username}@{hostname}:{bare_repo}"
-            result = subprocess.run(['git', 'remote', 'add', 'production', remote_url], capture_output=True, text=True)
+            result = subprocess.run(['git', 'remote', 'add', remote_name, remote_url], capture_output=True, text=True)
             if result.returncode != 0:
-                self.logger.error(f"Échec de l'ajout du remote 'production': {result.stderr}")
+                self.logger.error(f"Échec de l'ajout du remote '{remote_name}': {result.stderr}")
                 return False
                 
-            self.logger.info(f"Remote 'production' ({remote_url}) ajouté avec succès.")
+            self.logger.info(f"Remote '{remote_name}' ({remote_url}) ajouté avec succès.")
             return True
         except Exception as e:
             self.logger.error(f"Erreur lors de la configuration Git locale: {e}")
