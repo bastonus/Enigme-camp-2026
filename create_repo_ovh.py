@@ -249,9 +249,10 @@ chmod +x hooks/post-receive
                     return False
                 self.logger.info("Dépôt Git local initialisé.")
             
-            # 2. Configurer remote.<remote_name>.sshCommand (portable)
-            normalized_key_path = key_path.replace('\\', '/')
-            ssh_command = f'ssh -i "$(git rev-parse --show-toplevel)/{normalized_key_path}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'
+            # 2. Configurer remote.<remote_name>.sshCommand (chemin absolu)
+            # Utilisation du chemin absolu sur Windows pour assurer le fonctionnement depuis n'importe quel sous-dossier
+            abs_key_path = os.path.abspath(key_path).replace('\\', '/')
+            ssh_command = f'ssh -i "{abs_key_path}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'
             
             result = subprocess.run(['git', 'config', f'remote.{remote_name}.sshCommand', ssh_command], capture_output=True, text=True)
             if result.returncode != 0:
