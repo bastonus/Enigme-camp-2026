@@ -1,0 +1,9 @@
+{
+    "hostname": "ssh.cluster100.hosting.ovh.net",
+    "port": 22,
+    "username": "vipcajb-camp2026",
+    "local_project_dir": "C:\\Users\\Azandikka\\OneDrive - association E.S.T.P\\Scouts\\2025-2026\\Enigme camp 2026",
+    "web_dir": "/home/vipcajb-camp2026/www",
+    "bare_repo": "/home/vipcajb-camp2026/site.git",
+    "deploy_workflow": "2"
+}

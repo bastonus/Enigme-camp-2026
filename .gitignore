@@ -1,0 +1,5 @@
+.ssh/
+data/
+__pycache__/
+logs/
+
